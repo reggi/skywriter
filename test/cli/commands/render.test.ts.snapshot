@@ -1,0 +1,15 @@
+exports[`renderCommand > output format > handles complex nested data in rendered output 1`] = `
+"{\\"html\\":\\"<div>test</div>\\",\\"metadata\\":{\\"author\\":\\"Test Author\\",\\"tags\\":[\\"tag1\\",\\"tag2\\"]}}\\n"
+`;
+
+exports[`renderCommand > output format > outputs empty object when rendered result is empty 1`] = `
+"{}\\n"
+`;
+
+exports[`renderCommand > output format > outputs rendered document as JSON 1`] = `
+"{\\"html\\":\\"<p>hello</p>\\",\\"path\\":\\"/test\\"}\\n"
+`;
+
+exports[`renderCommand > output format > preserves all rendered properties in output 1`] = `
+"{\\"html\\":\\"<h1>Title</h1>\\",\\"path\\":\\"/docs\\",\\"title\\":\\"Title\\",\\"style\\":\\"body { color: red; }\\",\\"script\\":\\"console.log(\\\\\\"hello\\\\\\")\\"}\\n"
+`;

@@ -1,0 +1,29 @@
+# Ignore development files
+node_modules/
+coverage/
+.git/
+.github/
+*.test.ts
+**/__test__/
+
+# Local development
+.env
+.env.local
+docker-compose.yml
+
+# Build artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Test data
+playground.ts

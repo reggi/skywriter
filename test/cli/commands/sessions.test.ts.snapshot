@@ -1,0 +1,55 @@
+exports[`sessions > wondoc sessions (multiple sessions) 1`] = `
+[
+  "serverUrl: https://server1.com",
+  "username: user1",
+  "active: true",
+  "",
+  "serverUrl: https://server2.com",
+  "username: user2",
+  "active: false",
+  "",
+  "serverUrl: https://server3.com",
+  "username: user3",
+  "active: false"
+]
+`;
+
+exports[`sessions > wondoc sessions (no sessions) 1`] = `
+[
+  "No remotes configured. Run \\"wondoc login\\" to add one."
+]
+`;
+
+exports[`sessions > wondoc sessions (one session) 1`] = `
+[
+  "serverUrl: https://example.com",
+  "username: testuser",
+  "active: true"
+]
+`;
+
+exports[`sessions > wondoc sessions --json (multiple sessions) 1`] = `
+[
+  "[",
+  "  {",
+  "    \\"serverUrl\\": \\"https://server1.com\\",",
+  "    \\"username\\": \\"user1\\",",
+  "    \\"active\\": true",
+  "  },",
+  "  {",
+  "    \\"serverUrl\\": \\"https://server2.com\\",",
+  "    \\"username\\": \\"user2\\",",
+  "    \\"active\\": false",
+  "  }",
+  "]"
+]
+`;
+
+exports[`sessions > wondoc sessions --json (no sessions) 1`] = `
+[
+  "{",
+  "  \\"error\\": \\"no_servers\\",",
+  "  \\"message\\": \\"No remotes configured. Run \\\\\\"wondoc login\\\\\\" to add one.\\"",
+  "}"
+]
+`;

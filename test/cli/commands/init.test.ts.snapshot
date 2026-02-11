@@ -1,0 +1,218 @@
+exports[`cli init > wondoc init --slot (dirty root settings, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "wondoc fs init checking folder ./template",
+  "Settings validation failed:\\n  - template/settings.json is missing\\n  - Template directory exists but template_path is not set in settings.json\\nRun \`wondoc settings --fix\` before proceeding."
+]
+`;
+
+exports[`cli init > wondoc init --slot (root has no path, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "Settings validation failed:\\n  - settings.json is missing the \\"path\\" field"
+]
+`;
+
+exports[`cli init > wondoc init --slot (slot_path already set, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "Root already has slot_path set to \\"/existing-slot\\""
+]
+`;
+
+exports[`cli init > wondoc init --slot 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "wondoc fs init creating directory ./slot/",
+  "wondoc fs init writing ./slot/settings.json",
+  "wondoc fs init writing ./slot/content.eta",
+  "wondoc fs init writing ./slot/style.css",
+  "wondoc fs init writing ./slot/server.js",
+  "wondoc fs init writing ./slot/script.js",
+  "wondoc fs init writing ./slot/.gitignore",
+  "wondoc fs init updating ./settings.json#slot_path to /existing-slot"
+]
+`;
+
+exports[`cli init > wondoc init --slot=existing (collides with root, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "Path collision: root and slot both resolve to \\"/existing\\""
+]
+`;
+
+exports[`cli init > wondoc init --slot=meow 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "wondoc fs init creating directory ./slot/",
+  "wondoc fs init writing ./slot/settings.json",
+  "wondoc fs init writing ./slot/content.eta",
+  "wondoc fs init writing ./slot/style.css",
+  "wondoc fs init writing ./slot/server.js",
+  "wondoc fs init writing ./slot/script.js",
+  "wondoc fs init writing ./slot/.gitignore",
+  "wondoc fs init updating ./settings.json#slot_path to /meow"
+]
+`;
+
+exports[`cli init > wondoc init --slot=taken (collides with template_path, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "Path collision: slot and existing template_path both resolve to \\"/taken\\""
+]
+`;
+
+exports[`cli init > wondoc init --template (template/ not empty, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "Directory must be empty to initialize a new document"
+]
+`;
+
+exports[`cli init > wondoc init --template (template_path already set, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "Root already has template_path set to \\"/existing-template\\""
+]
+`;
+
+exports[`cli init > wondoc init --template --slot (non-empty) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "wondoc fs init creating directory ./template/",
+  "wondoc fs init writing ./template/settings.json",
+  "wondoc fs init writing ./template/content.eta",
+  "wondoc fs init writing ./template/style.css",
+  "wondoc fs init writing ./template/server.js",
+  "wondoc fs init writing ./template/script.js",
+  "wondoc fs init writing ./template/.gitignore",
+  "wondoc fs init updating ./settings.json#template_path to /existing-template",
+  "wondoc fs init creating directory ./slot/",
+  "wondoc fs init writing ./slot/settings.json",
+  "wondoc fs init writing ./slot/content.eta",
+  "wondoc fs init writing ./slot/style.css",
+  "wondoc fs init writing ./slot/server.js",
+  "wondoc fs init writing ./slot/script.js",
+  "wondoc fs init writing ./slot/.gitignore",
+  "wondoc fs init updating ./settings.json#slot_path to /existing-slot"
+]
+`;
+
+exports[`cli init > wondoc init --template 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "wondoc fs init creating directory ./template/",
+  "wondoc fs init writing ./template/settings.json",
+  "wondoc fs init writing ./template/content.eta",
+  "wondoc fs init writing ./template/style.css",
+  "wondoc fs init writing ./template/server.js",
+  "wondoc fs init writing ./template/script.js",
+  "wondoc fs init writing ./template/.gitignore",
+  "wondoc fs init updating ./settings.json#template_path to /existing-template"
+]
+`;
+
+exports[`cli init > wondoc init /root (non-empty, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init writing ./settings.json",
+  "wondoc fs init writing ./content.eta",
+  "wondoc fs init writing ./style.css",
+  "wondoc fs init writing ./server.js",
+  "wondoc fs init writing ./script.js",
+  "wondoc fs init writing ./.gitignore",
+  "Expected error"
+]
+`;
+
+exports[`cli init > wondoc init /root --template --slot 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init writing ./settings.json",
+  "wondoc fs init writing ./content.eta",
+  "wondoc fs init writing ./style.css",
+  "wondoc fs init writing ./server.js",
+  "wondoc fs init writing ./script.js",
+  "wondoc fs init writing ./.gitignore",
+  "wondoc fs init creating directory ./template/",
+  "wondoc fs init writing ./template/settings.json",
+  "wondoc fs init writing ./template/content.eta",
+  "wondoc fs init writing ./template/style.css",
+  "wondoc fs init writing ./template/server.js",
+  "wondoc fs init writing ./template/script.js",
+  "wondoc fs init writing ./template/.gitignore",
+  "wondoc fs init updating ./settings.json#template_path to /root-template",
+  "wondoc fs init creating directory ./slot/",
+  "wondoc fs init writing ./slot/settings.json",
+  "wondoc fs init writing ./slot/content.eta",
+  "wondoc fs init writing ./slot/style.css",
+  "wondoc fs init writing ./slot/server.js",
+  "wondoc fs init writing ./slot/script.js",
+  "wondoc fs init writing ./slot/.gitignore",
+  "wondoc fs init updating ./settings.json#slot_path to /root-slot"
+]
+`;
+
+exports[`cli init > wondoc init /root --template=same --slot=same (collision, errors) 1`] = `
+[
+  "Path collision: template and slot both resolve to \\"/same\\""
+]
+`;
+
+exports[`cli init > wondoc init /wrong --slot (path mismatch, errors) 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init reading ./settings.json",
+  "Provided path \\"/wrong\\" does not match root path \\"/existing\\""
+]
+`;
+
+exports[`cli init > wondoc init foo --slot=bar --template=baz 1`] = `
+[
+  "wondoc fs init reading directory ./",
+  "wondoc fs init writing ./settings.json",
+  "wondoc fs init writing ./content.eta",
+  "wondoc fs init writing ./style.css",
+  "wondoc fs init writing ./server.js",
+  "wondoc fs init writing ./script.js",
+  "wondoc fs init writing ./.gitignore",
+  "wondoc fs init creating directory ./template/",
+  "wondoc fs init writing ./template/settings.json",
+  "wondoc fs init writing ./template/content.eta",
+  "wondoc fs init writing ./template/style.css",
+  "wondoc fs init writing ./template/server.js",
+  "wondoc fs init writing ./template/script.js",
+  "wondoc fs init writing ./template/.gitignore",
+  "wondoc fs init updating ./settings.json#template_path to /baz",
+  "wondoc fs init creating directory ./slot/",
+  "wondoc fs init writing ./slot/settings.json",
+  "wondoc fs init writing ./slot/content.eta",
+  "wondoc fs init writing ./slot/style.css",
+  "wondoc fs init writing ./slot/server.js",
+  "wondoc fs init writing ./slot/script.js",
+  "wondoc fs init writing ./slot/.gitignore",
+  "wondoc fs init updating ./settings.json#slot_path to /bar"
+]
+`;
+
+exports[`cli init > wondoc init root --slot=root (collision, errors) 1`] = `
+[
+  "Path collision: root and slot both resolve to \\"/root\\""
+]
+`;
+
+exports[`cli init > wondoc init root --template=root (collision, errors) 1`] = `
+[
+  "Path collision: root and template both resolve to \\"/root\\""
+]
+`;

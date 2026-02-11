@@ -1,0 +1,44 @@
+exports[`vscodeInit > VS Code integration > --init only does not open VS Code 1`] = `
+[
+  "wondoc fs vscode reading ./settings.json",
+  "wondoc info vscode Project path: /docs",
+  "wondoc fs vscode creating directory ./.github/",
+  "wondoc fs vscode writing ./.github/copilot-instructions.md",
+  "wondoc fs vscode writing ./doc.code-workspace"
+]
+`;
+
+exports[`vscodeInit > VS Code integration > --open only does not create workspace files 1`] = `
+[
+  "wondoc fs vscode reading ./settings.json",
+  "wondoc exec vscode code \\"<tmpdir>/doc.code-workspace\\""
+]
+`;
+
+exports[`vscodeInit > VS Code integration > opens workspace in VS Code when code CLI is available 1`] = `
+[
+  "wondoc fs vscode reading ./settings.json",
+  "wondoc info vscode Project path: /docs",
+  "wondoc fs vscode creating directory ./.github/",
+  "wondoc fs vscode writing ./.github/copilot-instructions.md",
+  "wondoc fs vscode writing ./doc.code-workspace",
+  "wondoc exec vscode code \\"<tmpdir>/doc.code-workspace\\""
+]
+`;
+
+exports[`vscodeInit > VS Code integration > throws when VS Code CLI is not available 1`] = `
+[
+  "wondoc fs vscode reading ./settings.json",
+  "VS Code CLI (code) is not available. Install it from VS Code: Cmd+Shift+P → \\"Shell Command: Install 'code' command in PATH\\""
+]
+`;
+
+exports[`vscodeInit > with valid project > logs project path information 1`] = `
+[
+  "wondoc fs vscode reading ./settings.json",
+  "wondoc info vscode Project path: /my-docs",
+  "wondoc fs vscode creating directory ./.github/",
+  "wondoc fs vscode writing ./.github/copilot-instructions.md",
+  "wondoc fs vscode writing ./doc.code-workspace"
+]
+`;

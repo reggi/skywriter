@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "strictNullChecks": true
+  },
+  "include": ["**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "migrations",
+    "e2e",
+    "coverage",
+    "playwright-report",
+    "test-results",
+    "uploads",
+    "src/editor"
+  ]
+}

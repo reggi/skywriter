@@ -1,0 +1,57 @@
+exports[`switchServer > URL argument > errors when URL has no username 1`] = `
+[
+  "wondoc fs remote switch reading ~/.wondoc.json",
+  "URL must include a username (e.g. http://user@host.com)"
+]
+`;
+
+exports[`switchServer > URL argument > errors when server not found 1`] = `
+[
+  "wondoc fs remote switch reading ~/.wondoc.json",
+  "No server found for reggi@other.com"
+]
+`;
+
+exports[`switchServer > URL argument > switches directly when URL with username provided 1`] = `
+[
+  "wondoc fs remote switch reading ~/.wondoc.json",
+  "wondoc fs remote switch updating ~/.wondoc.json#active to https://user2@server2.com"
+]
+`;
+
+exports[`switchServer > with multiple servers > allows selecting the current default server (no-op switch) 1`] = `
+[
+  "wondoc fs remote switch reading ~/.wondoc.json",
+  "✔ Select default server: https://server1.com (user1) (current default)",
+  "wondoc info remote switch user1@server1.com is already the active server."
+]
+`;
+
+exports[`switchServer > with multiple servers > sets selected server as default 1`] = `
+[
+  "wondoc fs remote switch reading ~/.wondoc.json",
+  "✔ Select default server: https://server2.com (user2)",
+  "wondoc fs remote switch updating ~/.wondoc.json#active to https://user2@server2.com"
+]
+`;
+
+exports[`switchServer > with multiple servers > switches to a different server from three 1`] = `
+[
+  "wondoc fs remote switch reading ~/.wondoc.json",
+  "✔ Select default server: https://server3.com (user3)",
+  "wondoc fs remote switch updating ~/.wondoc.json#active to https://user3@server3.com"
+]
+`;
+
+exports[`switchServer > with no servers > shows message to login when no servers exist 1`] = `
+[
+  "No servers configured. Run \\"wondoc login\\" to add one."
+]
+`;
+
+exports[`switchServer > with one server > shows message that only one server is configured 1`] = `
+[
+  "wondoc fs remote switch reading ~/.wondoc.json",
+  "wondoc info remote switch Only one server is configured."
+]
+`;

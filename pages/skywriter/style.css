@@ -1,0 +1,167 @@
+/* Custom styles for your document */
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+.content,
+.content p,
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6,
+.content li,
+.content td,
+.content th {
+  font-family: 'Space Mono', monospace !important;
+}
+
+.toc,
+.toc h2,
+.toc a {
+  font-family: 'Space Mono', monospace !important;
+}
+
+.toc > ul > li {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.toc > ul > li:last-child {
+  border-bottom: none;
+}
+
+.toc > ul > li > a {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.toc ul ul {
+  padding-left: 1rem !important;
+  margin-top: 0.25rem;
+  border-left: 1px solid #ddd;
+}
+
+.toc ul ul a {
+  font-size: 0.8rem !important;
+  color: #555 !important;
+}
+
+.sidebar {
+  padding-right: 1.5rem !important;
+}
+
+.main-container {
+  gap: 0.25rem !important;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6 {
+  border-top: 1px solid #e0e0e0 !important;
+  padding-top: 0.5rem !important;
+}
+
+.content h1 code,
+.content h2 code,
+.content h3 code,
+.content h4 code {
+  font-size: inherit !important;
+  background: #f5f5f5;
+  color: #d73a49;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95em;
+}
+
+th,
+td {
+  padding: 0.6em 1em;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background: #fafafa;
+}
+
+td code {
+  background: #f0f0f0;
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.callout {
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  border-left: 4px solid;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.callout p {
+  margin-bottom: 0.5rem;
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+.callout-title {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.callout.tip {
+  border-color: #1a7f37;
+  background: #f0fdf4;
+}
+
+.callout.tip .callout-title {
+  color: #1a7f37;
+}
+
+.callout.important {
+  border-color: #9a6700;
+  background: #fff8e1;
+}
+
+.callout.important .callout-title {
+  color: #9a6700;
+}
+
+.callout.note {
+  border-color: #0969da;
+  background: #eff6ff;
+}
+
+.callout.note .callout-title {
+  color: #0969da;
+}
+
+.callout.warning {
+  border-color: #cf222e;
+  background: #fff5f5;
+}
+
+.callout.warning .callout-title {
+  color: #cf222e;
+}

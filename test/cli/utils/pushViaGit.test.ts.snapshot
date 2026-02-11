@@ -1,0 +1,21 @@
+exports[`pushViaGit > log output > logs push flow 1`] = `
+[
+  "wondoc fs push reading ~/.wondoc.json",
+  "wondoc info push accessing credentials for testuser@localhost:3000",
+  "wondoc exec push /test-doc git push",
+  "wondoc info push url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pushViaGit > log output > logs push with template and slot 1`] = `
+[
+  "wondoc fs push reading ~/.wondoc.json",
+  "wondoc info push accessing credentials for testuser@localhost:3000",
+  "wondoc fs push checking folder <tmpdir>/template",
+  "wondoc fs push checking folder <tmpdir>/slot",
+  "wondoc exec push /test-template git -C \\"template\\" push",
+  "wondoc exec push /test-slot git -C \\"slot\\" push",
+  "wondoc exec push /test-doc git push",
+  "wondoc info push url: http://localhost:3000/test-doc"
+]
+`;

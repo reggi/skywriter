@@ -1,0 +1,106 @@
+exports[`login > --use-env > skywriter login --use-env (WONDOC_SECRET not set, errors) 1`] = `
+[
+  "WONDOC_SECRET environment variable is not set"
+]
+`;
+
+exports[`login > --use-env > skywriter login --use-env (WONDOC_SECRET=password, with url arg) 1`] = `
+[
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc info login saving credentials for reggi@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://reggi@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://reggi@example.com"
+]
+`;
+
+exports[`login > --use-env > skywriter login --use-env (WONDOC_SECRET=url with user only) 1`] = `
+[
+  "✔ Password: ********",
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc info login saving credentials for reggi@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://reggi@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://reggi@example.com"
+]
+`;
+
+exports[`login > --use-env > skywriter login --use-env -y (WONDOC_SECRET=full URL) 1`] = `
+[
+  "wondoc warn login Password in URL is saved in shell history. Use WONDOC_SECRET with --use-env instead.",
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc info login saving credentials for reggi@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://reggi@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://reggi@example.com"
+]
+`;
+
+exports[`login > --use-env > skywriter login https://reggi@example.com --use-env (WONDOC_SECRET=URL, collision errors) 1`] = `
+[
+  "Cannot provide both WONDOC_SECRET URL and a CLI url argument"
+]
+`;
+
+exports[`login > URL argument > skywriter login https://example.com (prompts username) 1`] = `
+[
+  "✔ Username: reggi",
+  "✔ Password: ******",
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc info login saving credentials for reggi@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://reggi@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://reggi@example.com"
+]
+`;
+
+exports[`login > URL argument > skywriter login https://reggi:pass@example.com (warns about password in URL) 1`] = `
+[
+  "wondoc warn login Password in URL is saved in shell history. Use WONDOC_SECRET with --use-env instead.",
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc info login saving credentials for reggi@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://reggi@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://reggi@example.com"
+]
+`;
+
+exports[`login > URL argument > skywriter login https://reggi@example.com --yes 1`] = `
+[
+  "✔ Password: ******",
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc fs login reading ~/.wondoc.json",
+  "wondoc info login saving credentials for reggi@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://reggi@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://reggi@example.com"
+]
+`;
+
+exports[`login > URL argument > skywriter login https://reggi@example.com 1`] = `
+[
+  "✔ Password: ******",
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc info login saving credentials for reggi@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://reggi@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://reggi@example.com"
+]
+`;
+
+exports[`login > successful login > completes login flow successfully 1`] = `
+[
+  "✔ Server URL: https://example.com",
+  "✔ Username: testuser",
+  "✔ Password: ********",
+  "wondoc http login POST https://example.com/edit?whoami 200",
+  "wondoc info login saving credentials for testuser@example.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://testuser@example.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://testuser@example.com"
+]
+`;
+
+exports[`login > successful login > stores credentials with default values when no existing servers 1`] = `
+[
+  "✔ Server URL: https://my-server.com",
+  "✔ Username: myuser",
+  "✔ Password: **********",
+  "wondoc http login POST https://my-server.com/edit?whoami 200",
+  "wondoc info login saving credentials for myuser@my-server.com",
+  "wondoc fs login updating ~/.wondoc.json#servers.https://myuser@my-server.com to {}",
+  "wondoc fs login updating ~/.wondoc.json#active to https://myuser@my-server.com"
+]
+`;

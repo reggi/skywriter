@@ -1,0 +1,38 @@
+exports[`pullViaGit > log output > logs clone flow 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc exec pull /test-doc git clone http://localhost:3000/test-doc.git \\"test-doc\\"",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pullViaGit > log output > logs clone with template and slot 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc exec pull /test-doc git clone http://localhost:3000/test-doc.git \\"test-doc\\"",
+  "wondoc exec pull /test-template git clone http://localhost:3000/test-template.git \\"test-doc/template\\"",
+  "wondoc exec pull /test-slot git clone http://localhost:3000/test-slot.git \\"test-doc/slot\\"",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pullViaGit > log output > logs update flow 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc exec pull /test-doc git pull",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pullViaGit > log output > logs update with slot 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc exec pull /test-doc git pull",
+  "wondoc exec pull /test-slot git -C \\"slot\\" pull",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;

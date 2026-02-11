@@ -1,0 +1,54 @@
+exports[`pushViaTar > log output > logs new document (404 server settings) 1`] = `
+[
+  "wondoc fs push reading ~/.wondoc.json",
+  "wondoc info push accessing credentials for testuser@localhost:3000",
+  "wondoc info push Building upload plan...",
+  "wondoc http push GET http://localhost:3000/new-doc/settings.json 404",
+  "wondoc info push Upload plan:",
+  "\\nCreate Main\\nhttp://localhost:3000/new-doc\\n✓ content.md\\n✓ settings.json",
+  "",
+  "wondoc http push /new-doc push POST http://localhost:3000/new-doc/edit?update=true 200",
+  "wondoc info push /new-doc push ✓ Uploaded successfully",
+  "wondoc info push url: http://localhost:3000/new-doc"
+]
+`;
+
+exports[`pushViaTar > log output > logs push flow 1`] = `
+[
+  "wondoc fs push reading ~/.wondoc.json",
+  "wondoc info push accessing credentials for testuser@localhost:3000",
+  "wondoc info push Building upload plan...",
+  "wondoc http push GET http://localhost:3000/test-doc/settings.json 200",
+  "wondoc info push Upload plan:",
+  "\\nUpdate Main\\nhttp://localhost:3000/test-doc\\n✓ content.md\\n✓ settings.json",
+  "",
+  "wondoc http push /test-doc push POST http://localhost:3000/test-doc/edit?update=true 200",
+  "wondoc info push /test-doc push ✓ Uploaded successfully",
+  "wondoc info push url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pushViaTar > log output > logs push with template and slot 1`] = `
+[
+  "wondoc fs push reading ~/.wondoc.json",
+  "wondoc info push accessing credentials for testuser@localhost:3000",
+  "wondoc fs push checking folder <tmpdir>/template",
+  "wondoc fs push checking folder <tmpdir>/slot",
+  "wondoc info push Building upload plan...",
+  "wondoc http push GET http://localhost:3000/test-template/settings.json 200",
+  "wondoc http push GET http://localhost:3000/test-slot/settings.json 200",
+  "wondoc http push GET http://localhost:3000/test-doc/settings.json 200",
+  "wondoc info push Upload plan:",
+  "\\nUpdate Template\\nhttp://localhost:3000/test-template\\n✓ content.md\\n✓ settings.json",
+  "\\nUpdate Slot\\nhttp://localhost:3000/test-slot\\n✓ content.md\\n✓ settings.json",
+  "\\nUpdate Main\\nhttp://localhost:3000/test-doc\\n✓ content.md\\n✓ settings.json",
+  "",
+  "wondoc http push /test-template push POST http://localhost:3000/test-template/edit?update=true 200",
+  "wondoc info push /test-template push ✓ Uploaded successfully",
+  "wondoc http push /test-slot push POST http://localhost:3000/test-slot/edit?update=true 200",
+  "wondoc info push /test-slot push ✓ Uploaded successfully",
+  "wondoc http push /test-doc push POST http://localhost:3000/test-doc/edit?update=true 200",
+  "wondoc info push /test-doc push ✓ Uploaded successfully",
+  "wondoc info push url: http://localhost:3000/test-doc"
+]
+`;

@@ -1,0 +1,55 @@
+<% const { asciiBox } = server %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skywriter - Open Source Project</title>
+  <meta name="description" content="Skywriter - An open source project documentation">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+  <header class="sky-container" role="banner">
+    <canvas id="skyCanvas" aria-hidden="true"></canvas>
+    <canvas id="cloudCanvas" aria-hidden="true"></canvas>
+    <div class="logo">
+      <h1 class="sr-only">Skywriter</h1>
+      <canvas id="logoCanvas" role="img" aria-label="Skywriter logo in pixelated retro style"></canvas>
+    </div>
+    <div class="fade-transition" aria-hidden="true">
+      <canvas id="fadeCanvas"></canvas>
+    </div>
+  </header>
+  <div class="ascii-center" style="margin-top: -20px; margin-bottom: -20px;">
+    <%= asciiBox("npm install skywriter -g") %>
+  </div>
+  <div class="main-container">
+    <aside class="sidebar">
+      <nav class="toc">
+        <h2>Contents</h2>
+<% function renderToc(items) { %>
+        <ul>
+        <% for (const item of items) { %>
+          <li>
+            <a href="#<%= item.id %>"><%= item.text %></a>
+            <% if (item.children.length > 0) { %><% renderToc(item.children) %><% } %>
+          </li>
+        <% } %>
+        </ul>
+<% } %>
+<% if (slot.meta.toc) { renderToc(slot.meta.toc) } %>
+      </nav>
+    </aside>
+    <main class="content">
+      <%= slot.html %>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    document.querySelectorAll('pre code').forEach(el => {
+      hljs.highlightElement(el);
+    });
+  </script>
+</body>
+</html>

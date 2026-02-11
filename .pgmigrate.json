@@ -1,0 +1,5 @@
+{
+  "migrations-dir": "migrations",
+  "migrations-table": "pgmigrations",
+  "migration-file-language": "js"
+}

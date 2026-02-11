@@ -1,0 +1,226 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # Platform-specific CLI credential tests
+  cli-credentials:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run platform-specific credential tests (Linux)
+        if: runner.os == 'Linux'
+        run: npm run test:folder -- 'test/cli/utils/credentials.linux.test.ts'
+
+      - name: Run platform-specific credential tests (macOS)
+        if: runner.os == 'macOS'
+        run: npm run test:folder -- 'test/cli/utils/credentials.macos.test.ts'
+
+      - name: Run platform-specific credential tests (Windows)
+        if: runner.os == 'Windows'
+        run: npm run test:folder -- 'test/cli/utils/credentials.windows.test.ts'
+
+  # Lint check
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format check
+        run: npm run format:check
+
+  # Type check
+  typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+  # Test structure check
+  test-structure:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test structure check
+        run: npm run test:structure
+
+  # Build check
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build:pkg
+
+      - name: Verify CLI bin
+        run: |
+          npm pack
+          npm install -g ./skywriter-*.tgz
+          skywriter --help
+
+  # Unit and integration tests
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: astrodoc
+          POSTGRES_USER: astrodoc
+          POSTGRES_PASSWORD: astrodoc_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://astrodoc:astrodoc_password@localhost:5432/astrodoc
+        run: npm run migrate:up
+
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql://astrodoc:astrodoc_password@localhost:5432/astrodoc
+        run: npm run test:coverage
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+  # End-to-end tests
+  e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: astrodoc
+          POSTGRES_USER: astrodoc
+          POSTGRES_PASSWORD: astrodoc_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://astrodoc:astrodoc_password@localhost:5432/astrodoc
+        run: npm run migrate:up
+
+      - name: Build editor
+        run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        env:
+          DATABASE_URL: postgresql://astrodoc:astrodoc_password@localhost:5432/astrodoc
+          ALLOW_SIGNUP: 'true'
+        run: npm run e2e
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

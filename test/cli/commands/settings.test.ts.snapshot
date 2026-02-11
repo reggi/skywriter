@@ -1,0 +1,85 @@
+exports[`settings command > --fix --json outputs fixed count, valid, and remaining violations 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "{",
+  "  \\"fixed\\": \\"1/2\\",",
+  "  \\"valid\\": false,",
+  "  \\"violations\\": [",
+  "    {",
+  "      \\"message\\": \\"Manual fix required\\"",
+  "    }",
+  "  ]",
+  "}"
+]
+`;
+
+exports[`settings command > --fix --json outputs fixed count, valid, and violations when all fixed 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "{",
+  "  \\"fixed\\": \\"1/1\\",",
+  "  \\"valid\\": true,",
+  "  \\"violations\\": []",
+  "}"
+]
+`;
+
+exports[`settings command > applies fixes when --fix is set 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "fixed: 1/1",
+  "valid: true"
+]
+`;
+
+exports[`settings command > does not apply fixes when --fix is not set 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "violations:",
+  "message: Fixable issue",
+  "fix: Apply fix"
+]
+`;
+
+exports[`settings command > does not set exitCode when all issues are fixed 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "fixed: 1/1",
+  "valid: true"
+]
+`;
+
+exports[`settings command > handles mix of fixable and unfixable with --fix 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "fixed: 1/2",
+  "valid: false",
+  "violations:",
+  "message: Manual fix required"
+]
+`;
+
+exports[`settings command > reports fixable and unfixable issues 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "violations:",
+  "message: Template directory exists but template_path is not set",
+  "fix: Set template_path to \\"/tmpl\\"",
+  "message: Unfixable issue"
+]
+`;
+
+exports[`settings command > reports issues without fix when no --fix flag 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "violations:",
+  "message: settings.json is missing the \\"path\\" field"
+]
+`;
+
+exports[`settings command > reports valid settings when no issues found 1`] = `
+[
+  "wondoc fs settings reading ./settings.json",
+  "valid: true"
+]
+`;

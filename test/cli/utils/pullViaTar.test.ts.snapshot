@@ -1,0 +1,67 @@
+exports[`pullViaTar > log output > logs already up to date 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc http pull /test-doc GET http://localhost:3000/test-doc/archive.tar.gz 200",
+  "wondoc info pull /test-doc ✓ Already up to date",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pullViaTar > log output > logs clone flow 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc http pull /test-doc GET http://localhost:3000/test-doc/archive.tar.gz 200",
+  "wondoc info pull /test-doc Archive: <size> (<hash>)",
+  "wondoc info pull /test-doc + settings.json (new)",
+  "wondoc info pull /test-doc + content.eta (new)",
+  "wondoc exec pull /test-doc Apply 2 file(s) to test-doc",
+  "wondoc exec pull /test-doc git -C test-doc init && git -C test-doc add -A && git -C test-doc commit -m \\"pull\\"",
+  "wondoc fs pull /test-doc writing ./.gitignore",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pullViaTar > log output > logs clone with template and slot 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc http pull /test-doc GET http://localhost:3000/test-doc/archive.tar.gz 200",
+  "wondoc info pull /test-doc Archive: <size> (<hash>)",
+  "wondoc info pull /test-doc + settings.json (new)",
+  "wondoc info pull /test-doc + content.eta (new)",
+  "wondoc exec pull /test-doc Apply 2 file(s) to test-doc",
+  "wondoc exec pull /test-doc git -C test-doc init && git -C test-doc add -A && git -C test-doc commit -m \\"pull\\"",
+  "wondoc fs pull /test-doc writing ./.gitignore",
+  "wondoc http pull /my-slot GET http://localhost:3000/my-slot/archive.tar.gz 200",
+  "wondoc info pull /my-slot Archive: <size> (<hash>)",
+  "wondoc info pull /my-slot + settings.json (new)",
+  "wondoc info pull /my-slot + content.eta (new)",
+  "wondoc exec pull /my-slot Apply 2 file(s) to test-doc/slot",
+  "wondoc exec pull /my-slot git -C test-doc/slot init && git -C test-doc/slot add -A && git -C test-doc/slot commit -m \\"pull\\"",
+  "wondoc fs pull /my-slot writing ./.gitignore",
+  "wondoc http pull /my-template GET http://localhost:3000/my-template/archive.tar.gz 200",
+  "wondoc info pull /my-template Archive: <size> (<hash>)",
+  "wondoc info pull /my-template + settings.json (new)",
+  "wondoc info pull /my-template + content.eta (new)",
+  "wondoc exec pull /my-template Apply 2 file(s) to test-doc/template",
+  "wondoc exec pull /my-template git -C test-doc/template init && git -C test-doc/template add -A && git -C test-doc/template commit -m \\"pull\\"",
+  "wondoc fs pull /my-template writing ./.gitignore",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;
+
+exports[`pullViaTar > log output > logs update flow with changes 1`] = `
+[
+  "wondoc fs pull reading ~/.wondoc.json",
+  "wondoc info pull accessing credentials for testuser@localhost:3000",
+  "wondoc http pull /test-doc GET http://localhost:3000/test-doc/archive.tar.gz 200",
+  "wondoc info pull /test-doc Archive: <size> (<hash>)",
+  "wondoc info pull /test-doc ~ content.eta (modified)",
+  "wondoc exec pull /test-doc Apply 1 file(s) to .",
+  "wondoc exec pull /test-doc git init && git add -A && git commit -m \\"pull\\"",
+  "wondoc fs pull /test-doc writing ./.gitignore",
+  "wondoc info pull url: http://localhost:3000/test-doc"
+]
+`;

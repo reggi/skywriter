@@ -1,0 +1,31 @@
+import type {PoolClient} from 'pg'
+import {
+  type RenderDocument,
+  type DocumentQuery,
+  type RenderDocumentsManyQuery,
+  type UploadsManyQuery,
+} from '../operations/types.ts'
+import {getPage} from '../operations/getPage.ts'
+import {getPages} from '../operations/getPages.ts'
+import {getUploads} from '../operations/getUploads.ts'
+
+export function functionContext(
+  client: PoolClient,
+  doc: RenderDocument | {path: string},
+  requestQuery?: Record<string, string>,
+) {
+  const safeQuery = requestQuery || {}
+
+  return {
+    getPage: async (query: DocumentQuery) => {
+      return await getPage(client, query, safeQuery, functionContext)
+    },
+    getPages: async (options?: RenderDocumentsManyQuery) => {
+      return await getPages(client, options, safeQuery, functionContext)
+    },
+    getUploads: async (options?: UploadsManyQuery & {path?: string}) => {
+      const docQuery = options?.path ? {path: options.path} : doc
+      return await getUploads(client, docQuery, options)
+    },
+  }
+}

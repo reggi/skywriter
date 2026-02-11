@@ -1,0 +1,10 @@
+{
+  "ignorePatterns": [
+    ".git-repos/**",
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
+    "dist/**",
+    "node_modules/**"
+  ]
+}

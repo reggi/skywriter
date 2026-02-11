@@ -1,0 +1,61 @@
+exports[`whoami > displays username@host when logged in 1`] = `
+[
+  "wondoc fs whoami reading ~/.wondoc.json",
+  "wondoc info whoami accessing credentials for myuser@my-server.com",
+  "wondoc http whoami POST https://my-server.com/edit?whoami 200",
+  "myuser@my-server.com"
+]
+`;
+
+exports[`whoami > outputs JSON error when credentials expired with --json 1`] = `
+[
+  "wondoc fs whoami reading ~/.wondoc.json",
+  "wondoc info whoami accessing credentials for myuser@my-server.com",
+  "{\\n  \\"error\\": \\"credentials_expired\\",\\n  \\"message\\": \\"Credentials expired for myuser@my-server.com. Run \\\\\\"wondoc login\\\\\\" to re-authenticate.\\"\\n}"
+]
+`;
+
+exports[`whoami > outputs JSON error when no servers with --json 1`] = `
+[
+  "{\\n  \\"error\\": \\"not_logged_in\\",\\n  \\"message\\": \\"Not logged in. Run \\\\\\"wondoc login\\\\\\" to authenticate.\\"\\n}"
+]
+`;
+
+exports[`whoami > outputs JSON when --json flag is set 1`] = `
+[
+  "wondoc fs whoami reading ~/.wondoc.json",
+  "wondoc info whoami accessing credentials for testuser@example.com",
+  "wondoc http whoami POST https://example.com/edit?whoami 200",
+  "{\\n  \\"username\\": \\"testuser\\",\\n  \\"host\\": \\"example.com\\",\\n  \\"serverUrl\\": \\"https://example.com\\"\\n}"
+]
+`;
+
+exports[`whoami > throws on verification failure 1`] = `
+[
+  "wondoc fs whoami reading ~/.wondoc.json",
+  "wondoc info whoami accessing credentials for myuser@my-server.com",
+  "wondoc http whoami POST https://my-server.com/edit?whoami 401",
+  "Failed to verify credentials: 401 Unauthorized"
+]
+`;
+
+exports[`whoami > throws when credentials are expired 1`] = `
+[
+  "wondoc fs whoami reading ~/.wondoc.json",
+  "wondoc info whoami accessing credentials for myuser@my-server.com",
+  "Credentials expired for myuser@my-server.com. Run \\"wondoc login\\" to re-authenticate."
+]
+`;
+
+exports[`whoami > throws when no servers exist 1`] = `
+[
+  "Not logged in. Run \\"wondoc login\\" to authenticate."
+]
+`;
+
+exports[`whoami > throws when servers exist but no default 1`] = `
+[
+  "wondoc fs whoami reading ~/.wondoc.json",
+  "No default server set. Run \\"wondoc remote switch\\" to select one."
+]
+`;

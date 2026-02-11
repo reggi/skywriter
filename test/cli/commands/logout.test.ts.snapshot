@@ -1,0 +1,96 @@
+exports[`logout > URL argument > errors when URL has no username 1`] = `
+[
+  "URL must include a username (e.g. http://user@host.com)"
+]
+`;
+
+exports[`logout > URL argument > errors when server not found 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "No server found for reggi@example.com"
+]
+`;
+
+exports[`logout > URL argument > logs out directly when URL with username provided 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "✔ Remove credentials for https://example.com (reggi)? Yes",
+  "wondoc info logout deleting credentials for reggi@example.com",
+  "wondoc fs logout removing ~/.wondoc.json#servers.https://reggi@example.com",
+  "wondoc info logout ✓ Logged out from: https://example.com (reggi)"
+]
+`;
+
+exports[`logout > URL argument > respects user declining confirmation 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "✔ Remove credentials for https://example.com (reggi)? No"
+]
+`;
+
+exports[`logout > URL argument > skips confirmation with --yes 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "wondoc info logout deleting credentials for reggi@example.com",
+  "wondoc fs logout removing ~/.wondoc.json#servers.https://reggi@example.com",
+  "wondoc info logout ✓ Logged out from: https://example.com (reggi)"
+]
+`;
+
+exports[`logout > URL argument > warns when password is in URL 1`] = `
+[
+  "wondoc warn logout Password in URL is saved in shell history. Do not include the url when logging out.",
+  "wondoc fs logout reading ~/.wondoc.json",
+  "✔ Remove credentials for https://example.com (reggi)? Yes",
+  "wondoc info logout deleting credentials for reggi@example.com",
+  "wondoc fs logout removing ~/.wondoc.json#servers.https://reggi@example.com",
+  "wondoc info logout ✓ Logged out from: https://example.com (reggi)"
+]
+`;
+
+exports[`logout > with no servers > shows message when no servers are configured 1`] = `
+[
+  "wondoc info logout No servers configured."
+]
+`;
+
+exports[`logout > with servers configured > allows selecting from multiple servers 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "✔ Select server to logout: https://server2.com (user2)",
+  "✔ Remove credentials for https://server2.com (user2)? Yes",
+  "wondoc info logout deleting credentials for user2@server2.com",
+  "wondoc fs logout removing ~/.wondoc.json#servers.https://user2@server2.com",
+  "wondoc info logout ✓ Logged out from: https://server2.com (user2)"
+]
+`;
+
+exports[`logout > with servers configured > can logout from non-default server 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "✔ Select server to logout: https://server3.com (user3)",
+  "✔ Remove credentials for https://server3.com (user3)? Yes",
+  "wondoc info logout deleting credentials for user3@server3.com",
+  "wondoc fs logout removing ~/.wondoc.json#servers.https://user3@server3.com",
+  "wondoc info logout ✓ Logged out from: https://server3.com (user3)"
+]
+`;
+
+exports[`logout > with servers configured > deletes credentials when user confirms 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "✔ Select server to logout: https://example.com (testuser) (default)",
+  "✔ Remove credentials for https://example.com (testuser)? Yes",
+  "wondoc info logout deleting credentials for testuser@example.com",
+  "wondoc fs logout removing ~/.wondoc.json#servers.https://testuser@example.com",
+  "wondoc info logout ✓ Logged out from: https://example.com (testuser)"
+]
+`;
+
+exports[`logout > with servers configured > does not delete credentials when user declines 1`] = `
+[
+  "wondoc fs logout reading ~/.wondoc.json",
+  "✔ Select server to logout: https://example.com (testuser) (default)",
+  "✔ Remove credentials for https://example.com (testuser)? No"
+]
+`;
