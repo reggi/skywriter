@@ -1,6 +1,5 @@
 import {readFileSync, statSync, watch} from 'fs'
 import {join} from 'path'
-import * as esbuild from 'esbuild'
 import type {MiddlewareHandler} from 'hono'
 import type {AppContext} from '../utils/types.ts'
 
@@ -77,6 +76,7 @@ export const assets: MiddlewareHandler<AppContext> = async c => {
     if (isDev && filename === 'editor.js') {
       if (JS_CHANGED || !cachedJsBundle) {
         try {
+          const esbuild = await import('esbuild')
           console.log('🔨 Building editor bundle...')
           await esbuild.build({
             entryPoints: [join(editorDir, 'index.ts')],

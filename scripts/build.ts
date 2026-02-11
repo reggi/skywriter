@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild'
-import {writeFileSync} from 'fs'
+import {mkdirSync, writeFileSync} from 'fs'
 import {join} from 'path'
 
 const editorDir = join(import.meta.dirname!, '../src/editor')
@@ -8,6 +8,8 @@ const outDir = join(import.meta.dirname!, '../dist')
 async function buildEditorBundle() {
   const isDev = process.env.NODE_ENV === 'development'
   const bundleFilename = isDev ? 'editor.bundle.dev.js' : 'editor.bundle.prod.js'
+
+  mkdirSync(outDir, {recursive: true})
 
   console.log(`Building editor frontend bundle (${isDev ? 'development' : 'production'})...`)
 
@@ -35,6 +37,8 @@ async function buildEditorBundle() {
 
 async function buildEditorBundleWatch() {
   console.log('Building editor frontend bundle in watch mode...')
+
+  mkdirSync(outDir, {recursive: true})
 
   const ctx = await esbuild.context({
     entryPoints: [join(editorDir, 'index.ts')],
