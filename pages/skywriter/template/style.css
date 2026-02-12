@@ -18,7 +18,8 @@
   border-width: 0;
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
   width: 100%;
 }
