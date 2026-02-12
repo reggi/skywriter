@@ -150,6 +150,7 @@ body {
   align-self: flex-start;
   max-height: calc(100vh - 4rem);
   overflow-y: auto;
+  padding-right: 1.5rem;
 }
 
 .toc {
@@ -217,9 +218,12 @@ body {
 
   .sidebar {
     width: 100%;
+    align-self: center;
+    max-width: 500px;
+    margin-bottom: 1rem;
     position: static;
     max-height: none;
-    margin-bottom: 1rem;
+    padding-right: 0;
   }
 
   .toc {
@@ -229,6 +233,9 @@ body {
     border-radius: 8px;
     padding: 0;
     overflow: hidden;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .toc h2 {
