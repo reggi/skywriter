@@ -46,7 +46,7 @@ mock.module('../../src/operations/getRenderDocument.ts', {
 })
 
 // Mock functionContext to avoid database calls
-mock.module('../../src/utils/functionContext.ts', {
+mock.module('../../src/fn/functionContext.ts', {
   namedExports: {
     functionContext: () => ({}),
   },

@@ -229,13 +229,3 @@ interface RenderDocumentOptions {
 export interface RenderDocumentGetOptions extends GetOptions, RenderDocumentOptions {}
 
 export interface RenderDocumentsManyQuery extends DocumentManyQuery, RenderDocumentOptions {}
-
-/**
- * Factory function type for creating function context
- * Used by getPage/getPages to pass context to the render function
- */
-export type FunctionContext = (
-  client: import('pg').PoolClient,
-  doc: RenderDocument | {path: string},
-  requestQuery?: Record<string, string>,
-) => Record<string, unknown>

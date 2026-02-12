@@ -1,6 +1,6 @@
 import {assemble} from './assemble.ts'
 import {render} from '../../render/index.ts'
-import {functionContextClient} from '../../utils/functionContextClient.ts'
+import {functionContextClient} from '../../fn/functionContextClient.ts'
 import type {PrefixLog} from './prefixLog.ts'
 
 interface PopulateCacheConfig {

@@ -1,4 +1,6 @@
-import type {DocumentQuery, RenderDocumentsManyQuery, UploadsManyQuery} from '../operations/types.ts'
+import type {DocumentQuery, RenderDocumentsManyQuery, Upload, UploadsManyQuery} from '../operations/types.ts'
+import type {FunctionContext} from './types.ts'
+import type {RenderedDoc} from '../render/utils/base.ts'
 import {createHash} from 'crypto'
 import {mkdir, readFile, writeFile, rm} from 'fs/promises'
 import {join} from 'path'
@@ -16,11 +18,11 @@ function getCacheKey(fnName: string, args: unknown): string {
  * Client-side version of functionContext that makes fetch requests to the server
  * Drop-in replacement for server-side functionContext
  */
-export function functionContextClient(
+export const functionContextClient = (
   serverUrl?: string,
   auth?: {username: string; password: string},
   options?: {cache?: boolean; log?: (message: string) => void},
-) {
+): FunctionContext => {
   const baseUrl = serverUrl || ''
   const enableCache = options?.cache ?? true
   const cacheDir = './cache'
@@ -84,13 +86,13 @@ export function functionContextClient(
 
   return {
     getPage: async (query: DocumentQuery) => {
-      return await callFunction('getPage', {query})
+      return await callFunction<RenderedDoc | null>('getPage', {query})
     },
     getPages: async (options?: RenderDocumentsManyQuery) => {
-      return await callFunction('getPages', {options})
+      return await callFunction<RenderedDoc[]>('getPages', {options})
     },
     getUploads: async (options?: UploadsManyQuery & {path?: string}) => {
-      return await callFunction('getUploads', {options})
+      return await callFunction<Upload[]>('getUploads', {options})
     },
   }
 }

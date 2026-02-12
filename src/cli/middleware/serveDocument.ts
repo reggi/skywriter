@@ -2,57 +2,58 @@ import type {MiddlewareHandler} from 'hono'
 import {assemble} from '../utils/assemble.ts'
 import {responder} from '../../responder/index.ts'
 import {render} from '../../render/index.ts'
-import {functionContextClient} from '../../utils/functionContextClient.ts'
+import {functionContextClient} from '../../fn/functionContextClient.ts'
+import {functionContextFs} from '../../fn/functionContextFs.ts'
+import {functionContextNoop} from '../../fn/functionContextNoop.ts'
+import type {FunctionContext} from '../../fn/types.ts'
 import {readConfig} from '../utils/config.ts'
 import type {CliContext} from '../utils/types.ts'
 import type {CliMiddlewareFactory, DiscoveryGetter, DiscoveryResult} from './types.ts'
 import {createPrefixLog} from '../utils/prefixLog.ts'
 import log from '../utils/log.ts'
 
+export type FnMode = 'api' | 'fs'
+
 /**
  * Middleware that serves documents by finding and assembling them on-demand.
  *
  * @param getDiscovery - Getter function for the current discovery result
  * @param ctx - CLI context for authentication
+ * @param fnMode - Function context mode: 'api' (default) uses remote server, 'fs' uses local filesystem
  */
-export const serveDocument: CliMiddlewareFactory<[getDiscovery: DiscoveryGetter, ctx: CliContext]> = (
+export const serveDocument: CliMiddlewareFactory<[getDiscovery: DiscoveryGetter, ctx: CliContext, fnMode?: FnMode]> = (
   getDiscovery,
   ctx,
+  fnMode = 'api',
 ): MiddlewareHandler => {
   // Create function context once (lazily initialized)
-  let fn: ReturnType<typeof functionContextClient> | null = null
+  let fn: FunctionContext | null = null
   let fnInitialized = false
 
   const getFn = async () => {
     if (!fnInitialized) {
       fnInitialized = true
-      try {
-        const cmdLog = createPrefixLog(ctx.cliName, 'serve')
-        const config = await readConfig(ctx, cmdLog)
-        fn = functionContextClient(
-          config.serverUrl,
-          {
-            username: config.username,
-            password: config.password,
-          },
-          {cache: true},
-        )
-        log.info(`\n🔐 Connected to: ${config.serverUrl}`)
-        log.info(`💾 Cache enabled: ./cache`)
-      } catch {
-        log.info('\n⚠️  Not logged in - server functions (fn.getPage, etc.) will not be available')
-        fn = {
-          getPage: async () => {
-            throw new Error(`fn.getPage() requires authentication. Run "${ctx.cliName} login" to connect to a server.`)
-          },
-          getPages: async () => {
-            throw new Error(`fn.getPages() requires authentication. Run "${ctx.cliName} login" to connect to a server.`)
-          },
-          getUploads: async () => {
-            throw new Error(
-              `fn.getUploads() requires authentication. Run "${ctx.cliName} login" to connect to a server.`,
-            )
-          },
+
+      if (fnMode === 'fs') {
+        fn = functionContextFs(getDiscovery)
+        log.info(`\n📂 Using filesystem function context (--fn=fs)`)
+      } else {
+        try {
+          const cmdLog = createPrefixLog(ctx.cliName, 'serve')
+          const config = await readConfig(ctx, cmdLog)
+          fn = functionContextClient(
+            config.serverUrl,
+            {
+              username: config.username,
+              password: config.password,
+            },
+            {cache: true},
+          )
+          log.info(`\n🔐 Connected to: ${config.serverUrl}`)
+          log.info(`💾 Cache enabled: ./cache`)
+        } catch {
+          log.info('\n⚠️  Not logged in - server functions (fn.getPage, etc.) will not be available')
+          fn = functionContextNoop(ctx.cliName)
         }
       }
     }

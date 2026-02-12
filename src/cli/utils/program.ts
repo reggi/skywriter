@@ -232,11 +232,13 @@ function createProgram(): Command {
     .option('-p, --port <port>', 'Port to serve on', '3001')
     .option('-w, --watch <watch>', 'Watch for file changes', 'true')
     .option('--clear-cache', 'Clear the cache before serving')
-    .action(async (options: {port: string; watch: string; clearCache?: boolean}) => {
+    .option('--fn <mode>', 'Function context mode: api (remote server) or fs (local filesystem)', 'api')
+    .action(async (options: {port: string; watch: string; clearCache?: boolean; fn?: string}) => {
       const port = parseInt(options.port, 10)
       const watch = options.watch !== 'false'
       const clearCache = options.clearCache || false
-      await serve(getCtx(), port, watch, clearCache)
+      const fnMode = options.fn === 'fs' ? 'fs' : 'api'
+      await serve(getCtx(), port, watch, clearCache, fnMode as 'api' | 'fs')
     })
 
   program

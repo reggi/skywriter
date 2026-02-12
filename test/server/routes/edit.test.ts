@@ -142,7 +142,7 @@ mock.module('../../../src/operations/search.ts', {
   },
 })
 
-mock.module('../../../src/utils/functionContext.ts', {
+mock.module('../../../src/fn/functionContext.ts', {
   namedExports: {
     functionContext: (_client: unknown, _doc: unknown, _query: unknown) => ({
       getPage: async (query: unknown) => {

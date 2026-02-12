@@ -1,6 +1,6 @@
 import {describe, it, mock, beforeEach, afterEach} from 'node:test'
 import assert from 'node:assert/strict'
-import {clearCache, functionContextClient} from '../../src/utils/functionContextClient.ts'
+import {clearCache, functionContextClient} from '../../src/fn/functionContextClient.ts'
 import {promises as fs} from 'fs'
 
 describe('clearCache', () => {

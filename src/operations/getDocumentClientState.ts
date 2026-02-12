@@ -9,7 +9,7 @@ import {getRenderDocument} from './getRenderDocument.ts'
 import {render} from '../render/index.ts'
 import {stringifyData} from '../utils/stringifyData.ts'
 import {getContent, getTabFilenames} from '../responder/index.ts'
-import {functionContext} from '../utils/functionContext.ts'
+import {functionContext} from '../fn/functionContext.ts'
 import {addUploadsFromContent} from './addUploadsFromContent.ts'
 
 /**
