@@ -323,53 +323,50 @@ function getContentPage(doc: RenderDocument): Record<string, Asset> {
     }
   }
 
-  function core(): Record<string, Asset> {
-    if (doc.content_type === 'markdown') {
-      return {
-        '/content.md': {
-          content: async (doc, _assets, getRender) => {
-            if (!getRender) throw new Error('getRender is required for markdown content')
-            return (await getRender(doc)).markdown
-          },
-          contentType: 'text/plain; charset=utf-8',
-        },
-        '.md': {
-          redirect: '/content.md',
-        },
-        '/content': {
-          redirect: '/content.md',
-        },
-      }
-    }
+  const assets: Record<string, Asset> = {}
 
-    return {
-      '/content.html': {
-        content: async (doc, _assets, getRender) => {
-          if (!getRender) throw new Error('getRender is required for html content')
-          return (await getRender(doc)).html
-        },
-        contentType: 'text/plain; charset=utf-8',
+  // Rendered markdown — available for markdown content or eta documents
+  if (doc.content_type === 'markdown' || doc.has_eta) {
+    assets['/content.md'] = {
+      content: async (doc, _assets, getRender) => {
+        if (!getRender) throw new Error('getRender is required for markdown content')
+        return (await getRender(doc)).markdown
       },
-      '/content': {
-        redirect: '/content.html',
+      contentType: 'text/plain; charset=utf-8',
+    }
+    assets['.md'] = {redirect: '/content.md'}
+  }
+
+  // Rendered HTML — available for non-markdown content
+  if (doc.content_type !== 'markdown') {
+    assets['/content.html'] = {
+      content: async (doc, _assets, getRender) => {
+        if (!getRender) throw new Error('getRender is required for html content')
+        return (await getRender(doc)).html
       },
+      contentType: 'text/plain; charset=utf-8',
     }
   }
 
-  const eta = {
-    '/content.eta': {
+  // Raw eta source — available when document uses eta templates
+  if (doc.has_eta) {
+    assets['/content.eta'] = {
       content: (doc: RenderDocument) => doc.content,
       contentType: 'text/plain; charset=utf-8',
-    },
-    '.eta': {
-      redirect: '/content.eta',
-    },
-    '/content': {
-      redirect: '/content.eta',
-    },
+    }
+    assets['.eta'] = {redirect: '/content.eta'}
   }
-  const c = core()
-  return doc.has_eta ? {...c, ...eta} : c
+
+  // /content redirects to the primary content file
+  if (doc.has_eta) {
+    assets['/content'] = {redirect: '/content.eta'}
+  } else if (doc.content_type === 'markdown') {
+    assets['/content'] = {redirect: '/content.md'}
+  } else {
+    assets['/content'] = {redirect: '/content.html'}
+  }
+
+  return assets
 }
 
 /**
@@ -607,6 +604,10 @@ async function getResponse(
     })
   }
   const assets = getAssets(doc) as Record<string, Asset>
+  const key = assetKey || ''
+  if (!assets[key]) {
+    return new Response('Not Found', {status: 404})
+  }
   const resolved = resolveAsset(doc, assets, assetKey)
   return assetResponse(doc, resolved.asset, assets, resolved.filename, getRender)
 }

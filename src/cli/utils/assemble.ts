@@ -105,7 +105,10 @@ function getDataType(filename: string): string | null {
  * Check if content has ETA templates
  */
 function hasEtaTemplates(content: string): boolean {
-  return /<%[\s\S]*?%>/.test(content)
+  // Strip <%raw%>...<%endraw%> blocks — these are escape directives,
+  // not actual eta template usage.
+  const stripped = content.replace(/<%\s*raw\s*%>[\s\S]*?<%\s*endraw\s*%>/g, '')
+  return /<%[\s\S]*?%>/.test(stripped)
 }
 
 /**
