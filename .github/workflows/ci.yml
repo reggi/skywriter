@@ -5,8 +5,19 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+    types: [opened, edited, synchronize, reopened]
 
 jobs:
+  # Validate PR title follows conventional commits
+  commitlint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # Platform-specific CLI credential tests
   cli-credentials:
     strategy:
