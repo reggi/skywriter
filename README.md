@@ -194,14 +194,14 @@ The web editor is your primary tool for creating and editing pages. Access it by
 
 Once logged in, you'll see the editor interface with multiple tabs:
 
-| Tab          | Purpose                                                                                 |
-| ------------ | --------------------------------------------------------------------------------------- |
-| **Content**  | Your page content — Markdown, HTML, or ETA templates                                    |
+| Tab          | Purpose                                                                |
+| ------------ | ---------------------------------------------------------------------- |
+| **Content**  | Your page content — Markdown, HTML, or ETA templates                   |
 | **Data**     | Structured data in JSON or YAML, accessible via `<%= data.property %>` |
-| **Style**    | Custom CSS for this specific page                                                       |
-| **Script**   | Client-side JavaScript that runs in the browser                                         |
-| **Server**   | Server-side JavaScript that runs at render time                                         |
-| **Settings** | Page metadata, uploads, redirects, template/slot assignments                            |
+| **Style**    | Custom CSS for this specific page                                      |
+| **Script**   | Client-side JavaScript that runs in the browser                        |
+| **Server**   | Server-side JavaScript that runs at render time                        |
+| **Settings** | Page metadata, uploads, redirects, template/slot assignments           |
 
 ### Key Editor Features
 
@@ -393,14 +393,14 @@ Think of your Skywriter instance as **an npm registry for webpages** — each pa
 
 Every page in Skywriter is a self-contained document made up of these files:
 
-| File                      | Required | Description                                                            |
-| ------------------------- | -------- | ---------------------------------------------------------------------- |
-| `settings.json`           | Yes      | Page metadata — path, draft status, published state                    |
-| `content.*`               | Yes      | Main content (`.md`, `.html`, `.eta`, or any extension)                |
-| `data.yaml` / `data.json` | No       | Structured data accessible via `<%= data.property %>` |
-| `style.css`               | No       | Page-specific CSS (auto-injected if not explicitly referenced)         |
-| `script.js`               | No       | Client-side JavaScript (auto-injected if not explicitly referenced)    |
-| `server.js`               | No       | Server-side JavaScript executed at render time                         |
+| File                      | Required | Description                                                         |
+| ------------------------- | -------- | ------------------------------------------------------------------- |
+| `settings.json`           | Yes      | Page metadata — path, draft status, published state                 |
+| `content.*`               | Yes      | Main content (`.md`, `.html`, `.eta`, or any extension)             |
+| `data.yaml` / `data.json` | No       | Structured data accessible via `<%= data.property %>`               |
+| `style.css`               | No       | Page-specific CSS (auto-injected if not explicitly referenced)      |
+| `script.js`               | No       | Client-side JavaScript (auto-injected if not explicitly referenced) |
+| `server.js`               | No       | Server-side JavaScript executed at render time                      |
 
 <div class="callout note">
 <div class="callout-title">📝 Note</div>
@@ -488,9 +488,9 @@ Skywriter uses the [ETA template engine](https://eta.js.org) for dynamic content
 
 | Syntax              | Purpose                     |
 | ------------------- | --------------------------- | --------------------- |
-|              | `<%= expression %>`         | Output (HTML-escaped) |
+|                     | `<%= expression %>`         | Output (HTML-escaped) |
 | `<%~ expression %>` | Output (raw/unescaped HTML) |
-| `<% code %>`        | Execute JavaScript logic    |             |
+| `<% code %>`        | Execute JavaScript logic    |                       |
 
 ### Available Variables
 
@@ -557,18 +557,14 @@ All the above are also available for slots via `slot.*`:
 ### Example
 
 ```html
-
 <h1><%= title %></h1>
 <p>Current path: <%= path %></p>
 
 <% if (data.author) { %>
 
-  <p>Written by <%= data.author %></p>
-<% } %>
-
-<%= server.greeting %>
-
-````
+<p>Written by <%= data.author %></p>
+<% } %> <%= server.greeting %>
+```
 
 ### Raw Blocks
 
@@ -582,7 +578,7 @@ Use the CLI to inspect all template variables:
 
 ```bash
 skywriter render
-````
+```
 
 This outputs all variable values as JSON — useful for understanding what's available in your templates.
 
@@ -608,8 +604,7 @@ In your content:
 
 ```markdown
 <%= server.greeting %>
-
-````
+```
 
 This renders: **hello world**
 
@@ -624,11 +619,11 @@ This renders: **hello world**
 
 The `fn` object is available in both ETA templates and `server.js`. It provides functions for querying other pages and uploads from the database.
 
-| Function | Description |
-|----------|-------------|
-| `fn.getPage(query)` | Get a single page by path or id |
-| `fn.getPages(options?)` | Get multiple pages with optional filtering and sorting |
-| `fn.getUploads(options?)` | Get uploads for the current page or a specific path |
+| Function                  | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| `fn.getPage(query)`       | Get a single page by path or id                        |
+| `fn.getPages(options?)`   | Get multiple pages with optional filtering and sorting |
+| `fn.getUploads(options?)` | Get uploads for the current page or a specific path    |
 
 #### `fn.getPage(query)`
 
@@ -636,11 +631,11 @@ Returns a fully rendered page object or `null` if not found. The query can be a 
 
 ```javascript
 // By path string
-const page = await fn.getPage("/about")
+const page = await fn.getPage('/about')
 
 // By path object
-const page = await fn.getPage({ path: "/about" })
-````
+const page = await fn.getPage({path: '/about'})
+```
 
 The returned object contains the same properties available as ETA variables: `title`, `path`, `html`, `markdown`, `data`, `meta`, `style`, `script`, `server`.
 
