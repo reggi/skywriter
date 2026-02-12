@@ -8,6 +8,8 @@ Skywriter is an invitation to return to that sense of ownership and creativity�
 
 — Tea ✨
 
+🔗 [GitHub](https://github.com/reggi/skywriter) · [npm](https://www.npmjs.com/package/skywriter) · [Website](https://skywriter.dev/)
+
 ## What is Skywriter?
 
 Skywriter is a self-hosted platform for publishing one-off HTML pages. Each page is a self-contained unit—HTML (EJS or Markdown), CSS, JavaScript, and data—stored in PostgreSQL and served at its own URL path.

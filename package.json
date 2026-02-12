@@ -1,6 +1,6 @@
 {
   "name": "skywriter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Open source html host and tool for syncing webpages to that host.",
   "repository": {
     "type": "git",
@@ -70,6 +70,7 @@
     "bcrypt": "^6.0.0",
     "commander": "^14.0.2",
     "dotenv": "^16.3.1",
+    "esbuild": "^0.27.3",
     "eta": "^4.5.0",
     "hono": "^4.11.1",
     "marked": "^17.0.1",
@@ -90,7 +91,6 @@
     "@types/tar-stream": "^3.1.4",
     "archiver": "^7.0.1",
     "c8": "^10.1.3",
-    "esbuild": "^0.24.2",
     "eslint": "^9.0.0",
     "glob": "^13.0.2",
     "playwright": "^1.48.0",
