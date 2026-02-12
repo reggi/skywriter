@@ -7,5 +7,20 @@
   "slot_path": "/skywriter",
   "template_path": null,
   "title": "",
-  "uploads": []
+  "uploads": [
+    "android-chrome-192x192.png",
+    "android-chrome-512x512.png",
+    "apple-touch-icon.png",
+    "banner.png",
+    "browserconfig.xml",
+    "favicon-16x16.png",
+    "favicon-32x32.png",
+    "favicon-48x48.png",
+    "favicon.ico",
+    "favicon.svg",
+    "mstile-150x150.png",
+    "site.webmanifest",
+    "atom-one-dark.min.css",
+    "highlight.min.js"
+  ]
 }
