@@ -1,9 +1,9 @@
 import {readFileSync, readdirSync} from 'node:fs'
 import {join, extname} from 'node:path'
-import type {PoolClient} from 'pg'
 import {upsert} from './upsert.ts'
 import {findDocument} from './findDocument.ts'
 import type {EditDocumentInput, DbOperation} from './types.ts'
+import {hasEtaTemplates} from './utils/utils.ts'
 
 /**
  * Reads document files from a directory and returns an EditDocumentInput.
@@ -46,7 +46,7 @@ function readDocumentDir(dir: string): EditDocumentInput & {template_path?: stri
   const data_type = dataExt ? dataTypeMap[dataExt] || null : null
 
   // Check for eta templates
-  const has_eta = content ? /<%[\s\S]*?%>/.test(content) : false
+  const has_eta = content ? hasEtaTemplates(content) : false
 
   // Normalize extension: .md, .html, .eta all become .html
   const extension = ['.md', '.html', '.eta'].includes(ext) ? '.html' : ext
