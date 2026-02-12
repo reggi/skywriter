@@ -3,7 +3,7 @@ import {join, extname} from 'node:path'
 import type {PoolClient} from 'pg'
 import {upsert} from './upsert.ts'
 import {findDocument} from './findDocument.ts'
-import type {EditDocumentInput} from './types.ts'
+import type {EditDocumentInput, DbOperation} from './types.ts'
 
 /**
  * Reads document files from a directory and returns an EditDocumentInput.
@@ -74,7 +74,7 @@ function readDocumentDir(dir: string): EditDocumentInput & {template_path?: stri
  * Seeds the database with demo content if no documents exist.
  * Reads document files from the pages/skywriter/ directory bundled with the package.
  */
-export async function seedIfEmpty(client: PoolClient): Promise<boolean> {
+export const seedIfEmpty: DbOperation<[], boolean> = async (client) => {
   const result = await client.query<{count: string}>('SELECT COUNT(*) as count FROM documents')
   const count = parseInt(result.rows[0].count, 10)
   if (count > 0) return false
