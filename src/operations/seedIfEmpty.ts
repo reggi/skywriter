@@ -74,7 +74,7 @@ function readDocumentDir(dir: string): EditDocumentInput & {template_path?: stri
  * Seeds the database with demo content if no documents exist.
  * Reads document files from the pages/skywriter/ directory bundled with the package.
  */
-export const seedIfEmpty: DbOperation<[], boolean> = async (client) => {
+export const seedIfEmpty: DbOperation<[], boolean> = async client => {
   const result = await client.query<{count: string}>('SELECT COUNT(*) as count FROM documents')
   const count = parseInt(result.rows[0].count, 10)
   if (count > 0) return false
