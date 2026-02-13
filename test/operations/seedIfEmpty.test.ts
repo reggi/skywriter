@@ -1,4 +1,4 @@
-import {describe, it, before, after, afterEach} from 'node:test'
+import {describe, it, before, after, beforeEach, afterEach} from 'node:test'
 import assert from 'node:assert'
 import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
 import {seedIfEmpty} from '../../src/operations/seedIfEmpty.ts'
@@ -11,9 +11,16 @@ describe('seedIfEmpty operation', () => {
     ctx = await createDatabaseContext()
   })
 
+  beforeEach(async () => {
+    // Clean up all documents, routes, and records before each test
+    // Delete documents first (cascade will handle routes)
+    await ctx.query('DELETE FROM documents')
+    await ctx.query('DELETE FROM document_records')
+  })
+
   afterEach(async () => {
-    // Clean up all documents, routes, and records
-    await ctx.query('DELETE FROM routes')
+    // Clean up all documents, routes, and records after each test
+    // Delete documents first (cascade will handle routes)
     await ctx.query('DELETE FROM documents')
     await ctx.query('DELETE FROM document_records')
   })
