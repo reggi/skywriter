@@ -1,5 +1,5 @@
 import {Command, CommanderError} from 'commander'
-import {getCliName, getCliId} from './cliName.ts'
+import {getCliName, getCliId, getCliVersion} from './cliName.ts'
 import type {CliContext} from './types.ts'
 import {red, cyan} from './colors.ts'
 import {login} from '../commands/login.ts'
@@ -28,7 +28,7 @@ function createProgram(): Command {
   program
     .name(getCliName())
     .description('Open source html host and tool for syncing webpages to that host.')
-    .version('1.0.0')
+    .version(getCliVersion())
     .option('-s, --silent', 'Suppress all output')
     .option('--json', 'Output as JSON (for commands that support it)')
     .option('--log-level <level>', 'Set log level (error, warn, notice, http, info, verbose, silly)', 'info')
