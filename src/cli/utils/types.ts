@@ -8,8 +8,6 @@ export interface CliContext {
   cliId: string
   /** The current working directory */
   cwd: string
-  /** Override credential storage to use file-based storage instead of system keychain */
-  authType?: 'file'
   /** Suppress all proc-log output (--silent) */
   silent?: boolean
   /** Output as JSON (--json) */

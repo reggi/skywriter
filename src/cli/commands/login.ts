@@ -1,6 +1,5 @@
 import {input, password, confirm} from '@inquirer/prompts'
-import {sanitizeServerUrl} from '../utils/config.ts'
-import {storeCredentials, listServers} from '../utils/credentials.ts'
+import {sanitizeServerUrl, readServerConfig} from '../utils/config.ts'
 import type {CliCommand} from '../utils/types.ts'
 import {createPrefixLog} from '../utils/prefixLog.ts'
 import {createLoggedFetch} from '../utils/loggedFetch.ts'
@@ -9,6 +8,7 @@ interface LoginOptions {
   url?: string
   yes?: boolean
   useEnv?: boolean
+  authStore?: 'file'
 }
 
 /**
@@ -42,7 +42,7 @@ function parseSecret(secret: string): {serverUrl?: string; username?: string; pa
  *   - SKYWRITER_SECRET=http://user:pass@host skywriter login -y   (fully non-interactive)
  */
 export const login: CliCommand<[LoginOptions?]> = async (ctx, options = {}) => {
-  const {url: argUrl, yes, useEnv} = options
+  const {url: argUrl, yes, useEnv, authStore} = options
   const cmdLog = createPrefixLog(ctx.cliName, 'login')
   const envSecretVar = `${ctx.cliId.toUpperCase()}_SECRET`
   const envSecret = useEnv ? process.env[envSecretVar] : undefined
@@ -153,7 +153,8 @@ export const login: CliCommand<[LoginOptions?]> = async (ctx, options = {}) => {
   }
 
   // Check if there are existing servers and ask if this should be the default
-  const servers = await listServers(ctx, cmdLog)
+  const serverConfig = await readServerConfig(ctx, cmdLog)
+  const servers = serverConfig.listServers()
   let setAsDefault = true
 
   if (servers.length > 0 && !yes) {
@@ -164,5 +165,5 @@ export const login: CliCommand<[LoginOptions?]> = async (ctx, options = {}) => {
   }
 
   // Save credentials
-  await storeCredentials(ctx, cmdLog, sanitizedUrl, username, userPassword, setAsDefault)
+  await serverConfig.storeCredentials(sanitizedUrl, username, userPassword, {setAsDefault, authStore})
 }

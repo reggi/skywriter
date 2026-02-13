@@ -72,12 +72,25 @@ export function createLoggedFs(log: PrefixLog, cwd: string = process.cwd()) {
       const jsonPath = keys.join('.')
       log.fs(`removing ${formatPath(path, cwd)}#${jsonPath}`)
     },
-    async updateSettingsFile(path: string, key: string, value: string) {
-      const raw = await nodeReadFile(path, 'utf-8')
-      const settings = JSON.parse(raw)
-      settings[key] = value
-      await nodeWriteFile(path, JSON.stringify(settings, null, 2) + '\n', 'utf-8')
-      log.fs(`updating ${formatPath(path, cwd)}#${key} to ${value}`)
+    async updateJsonPropertyRedacted(path: string, keys: string[], value: unknown) {
+      let data: Record<string, unknown> = {}
+      try {
+        const raw = await nodeReadFile(path, 'utf-8')
+        data = JSON.parse(raw)
+      } catch {
+        // File doesn't exist yet, start with empty object
+      }
+      let obj: Record<string, unknown> = data
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!(keys[i] in obj) || typeof obj[keys[i]] !== 'object' || obj[keys[i]] === null) {
+          obj[keys[i]] = {}
+        }
+        obj = obj[keys[i]] as Record<string, unknown>
+      }
+      obj[keys[keys.length - 1]] = value
+      await nodeWriteFile(path, JSON.stringify(data, null, 2) + '\n', 'utf-8')
+      const jsonPath = keys.join('.')
+      log.fs(`updating ${formatPath(path, cwd)}#${jsonPath} to [REDACTED]`)
     },
     async readdir(path: string): Promise<string[]> {
       const entries = await nodeReaddir(path)

@@ -1,15 +1,6 @@
 import {describe, it, afterEach, beforeEach, mock} from 'node:test'
 import assert from 'node:assert/strict'
-import type {CliContext} from '../../../src/cli/utils/types.ts'
-import type {PrefixLog} from '../../../src/cli/utils/prefixLog.ts'
 import {stripAnsi} from '../../helpers/stripAnsi.ts'
-
-// Mock CliContext for testing
-const mockCtx: CliContext = {
-  cliName: 'wondoc',
-  cliId: 'wondoc',
-  cwd: process.cwd(),
-}
 
 // Shared output array - mocks and tests both push here
 const output: {lines: string[]} = {lines: []}
@@ -20,24 +11,29 @@ let deletedCredentials: Array<{serverUrl: string; username: string}> = []
 let mockSelectResult: {serverUrl: string; username: string; active: boolean} | null = null
 let mockConfirmResult = false
 
-// Mock credentials module - emits same proc-log output as real functions
-mock.module('../../../src/cli/utils/credentials.ts', {
+// Mock config module - emits same proc-log output as real functions
+mock.module('../../../src/cli/utils/config.ts', {
   namedExports: {
-    listServers: async (_ctx: CliContext, cmdLog: PrefixLog) => {
-      if (mockServers.length > 0) {
-        cmdLog.fs('reading ~/.wondoc.json')
-      }
-      return mockServers
-    },
-    deleteCredentials: async (_ctx: CliContext, cmdLog: PrefixLog, serverUrl: string, username: string) => {
-      deletedCredentials.push({serverUrl, username})
-      const host = new URL(serverUrl).host
-      const url = new URL(serverUrl)
-      url.username = username
-      const key = url.href.replace(/\/$/, '')
-      cmdLog.info(`deleting credentials for ${username}@${host}`)
-      cmdLog.fs(`removing ~/.wondoc.json#servers.${key}`)
-    },
+    readServerConfig: async (
+      _ctx: {cliId: string},
+      cmdLog: {info: (msg: string) => void; fs: (msg: string) => void},
+    ) => ({
+      listServers: () => {
+        if (mockServers.length > 0) {
+          cmdLog.fs('reading ~/.wondoc.json')
+        }
+        return mockServers
+      },
+      deleteCredentials: async (serverUrl: string, username: string) => {
+        deletedCredentials.push({serverUrl, username})
+        const host = new URL(serverUrl).host
+        const url = new URL(serverUrl)
+        url.username = username
+        const key = url.href.replace(/\/$/, '')
+        cmdLog.info(`deleting credentials for ${username}@${host}`)
+        cmdLog.fs(`removing ~/.wondoc.json#servers.${key}`)
+      },
+    }),
   },
 })
 
@@ -65,6 +61,7 @@ mock.module('@inquirer/prompts', {
 
 // Import after mocking
 const {logout} = await import('../../../src/cli/commands/logout.ts')
+import {mockCliContext} from '../test-context.ts'
 
 // Handler for proc-log events
 const logHandler = (...args: unknown[]) => {
@@ -90,7 +87,7 @@ describe('logout', () => {
     it('shows message when no servers are configured', async t => {
       mockServers = []
 
-      await logout(mockCtx)
+      await logout(mockCliContext)
 
       assert.ok(output.lines.some(line => line.includes('No servers configured')))
       assert.equal(deletedCredentials.length, 0)
@@ -104,7 +101,7 @@ describe('logout', () => {
       mockSelectResult = {serverUrl: 'https://example.com', username: 'testuser', active: true}
       mockConfirmResult = true
 
-      await logout(mockCtx)
+      await logout(mockCliContext)
 
       assert.equal(deletedCredentials.length, 1)
       assert.deepEqual(deletedCredentials[0], {serverUrl: 'https://example.com', username: 'testuser'})
@@ -119,7 +116,7 @@ describe('logout', () => {
       mockSelectResult = {serverUrl: 'https://example.com', username: 'testuser', active: true}
       mockConfirmResult = false
 
-      await logout(mockCtx)
+      await logout(mockCliContext)
 
       assert.equal(deletedCredentials.length, 0)
       assert.ok(!output.lines.some(line => line.includes('Logged out from')))
@@ -134,7 +131,7 @@ describe('logout', () => {
       mockSelectResult = {serverUrl: 'https://server2.com', username: 'user2', active: false}
       mockConfirmResult = true
 
-      await logout(mockCtx)
+      await logout(mockCliContext)
 
       assert.equal(deletedCredentials.length, 1)
       assert.deepEqual(deletedCredentials[0], {serverUrl: 'https://server2.com', username: 'user2'})
@@ -150,7 +147,7 @@ describe('logout', () => {
       mockSelectResult = {serverUrl: 'https://server3.com', username: 'user3', active: false}
       mockConfirmResult = true
 
-      await logout(mockCtx)
+      await logout(mockCliContext)
 
       assert.deepEqual(deletedCredentials[0], {serverUrl: 'https://server3.com', username: 'user3'})
       assert.ok(output.lines.some(line => line.includes('https://server3.com')))
@@ -164,7 +161,7 @@ describe('logout', () => {
       mockServers = [{serverUrl: 'https://example.com', username: 'reggi', active: true}]
       mockConfirmResult = true
 
-      await logout(mockCtx, {url: 'https://reggi@example.com'})
+      await logout(mockCliContext, {url: 'https://reggi@example.com'})
 
       assert.equal(deletedCredentials.length, 1)
       assert.deepEqual(deletedCredentials[0], {serverUrl: 'https://example.com', username: 'reggi'})
@@ -176,7 +173,7 @@ describe('logout', () => {
 
       let error: string | undefined
       try {
-        await logout(mockCtx, {url: 'https://example.com'})
+        await logout(mockCliContext, {url: 'https://example.com'})
         assert.fail('Expected error')
       } catch (err) {
         error = (err as Error).message
@@ -190,7 +187,7 @@ describe('logout', () => {
 
       let error: string | undefined
       try {
-        await logout(mockCtx, {url: 'https://reggi@example.com'})
+        await logout(mockCliContext, {url: 'https://reggi@example.com'})
         assert.fail('Expected error')
       } catch (err) {
         error = (err as Error).message
@@ -203,7 +200,7 @@ describe('logout', () => {
       mockServers = [{serverUrl: 'https://example.com', username: 'reggi', active: true}]
       mockConfirmResult = false
 
-      await logout(mockCtx, {url: 'https://reggi@example.com'})
+      await logout(mockCliContext, {url: 'https://reggi@example.com'})
 
       assert.equal(deletedCredentials.length, 0)
       t.assert.snapshot(output.lines.map(stripAnsi))
@@ -212,7 +209,7 @@ describe('logout', () => {
     it('skips confirmation with --yes', async t => {
       mockServers = [{serverUrl: 'https://example.com', username: 'reggi', active: true}]
 
-      await logout(mockCtx, {url: 'https://reggi@example.com', yes: true})
+      await logout(mockCliContext, {url: 'https://reggi@example.com', yes: true})
 
       assert.equal(deletedCredentials.length, 1)
       assert.deepEqual(deletedCredentials[0], {serverUrl: 'https://example.com', username: 'reggi'})
@@ -223,7 +220,7 @@ describe('logout', () => {
       mockServers = [{serverUrl: 'https://example.com', username: 'reggi', active: true}]
       mockConfirmResult = true
 
-      await logout(mockCtx, {url: 'https://reggi:secret@example.com'})
+      await logout(mockCliContext, {url: 'https://reggi:secret@example.com'})
 
       assert.equal(deletedCredentials.length, 1)
       assert.ok(output.lines.some(line => line.includes('Password in URL')))

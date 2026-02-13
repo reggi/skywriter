@@ -1,4 +1,4 @@
-import {listServers} from '../utils/credentials.ts'
+import {readServerConfig} from '../utils/config.ts'
 import type {CliCommand} from '../utils/types.ts'
 import {createPrefixLog} from '../utils/prefixLog.ts'
 import {logData} from '../utils/logData.ts'
@@ -9,7 +9,8 @@ import {logData} from '../utils/logData.ts'
 export const sessions: CliCommand = async ctx => {
   const json = ctx.json
   const cmdLog = createPrefixLog(ctx.cliName, 'remote list')
-  const servers = await listServers(ctx, cmdLog)
+  const serverConfig = await readServerConfig(ctx, cmdLog)
+  const servers = serverConfig.listServers()
 
   if (servers.length === 0) {
     const message = `No remotes configured. Run "${ctx.cliName} login" to add one.`

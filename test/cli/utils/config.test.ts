@@ -1,7 +1,12 @@
 import {describe, it, mock, beforeEach} from 'node:test'
 import assert from 'node:assert/strict'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {rm, mkdir, writeFile} from 'node:fs/promises'
 import type {CliContext} from '../../../src/cli/utils/types.ts'
 import type {PrefixLog} from '../../../src/cli/utils/prefixLog.ts'
+
+const testTmpDir = join(tmpdir(), `config-test-${Date.now()}`)
 
 // Mock CliContext for testing
 const mockCtx: CliContext = {
@@ -22,23 +27,38 @@ const mockLog: PrefixLog = {
   prefix: () => mockLog,
 }
 
-// Mock data
-let mockDefaultServer: {serverUrl: string; username: string; password: string} | null = null
-let mockServerList: Array<{serverUrl: string; username: string}> = []
-let mockRetrieveCredentials: {serverUrl: string; username: string; password: string} | null = null
-
-// Mock credentials module
-mock.module('../../../src/cli/utils/credentials.ts', {
+// Mock os.homedir so config file goes to temp dir
+mock.module('node:os', {
   namedExports: {
-    getDefaultServer: async () => mockDefaultServer,
-    listServers: async () => mockServerList,
-    retrieveCredentials: async (_ctx: CliContext, _log: PrefixLog, _serverUrl: string, _username: string) =>
-      mockRetrieveCredentials,
+    platform: () => 'freebsd',
+    homedir: () => testTmpDir,
+  },
+})
+
+// Mock child_process to prevent real keychain calls
+mock.module('node:child_process', {
+  namedExports: {
+    exec: (_command: string, callback: (error: Error | null, result: {stdout: string; stderr: string}) => void) => {
+      callback(null, {stdout: '', stderr: ''})
+    },
   },
 })
 
 // Import after mocking
 const {sanitizeServerUrl, readConfig, resolveSource} = await import('../../../src/cli/utils/config.ts')
+
+// Helper to build server key
+function serverKey(serverUrl: string, username: string): string {
+  const url = new URL(serverUrl)
+  url.username = username
+  return url.href.replace(/\/$/, '')
+}
+
+// Helper to write a mock config file
+async function writeConfig(config: Record<string, unknown>) {
+  const configFile = join(testTmpDir, '.wondoc.json')
+  await writeFile(configFile, JSON.stringify(config))
+}
 
 describe('sanitizeServerUrl', () => {
   it('returns protocol and host for valid URL', () => {
@@ -77,11 +97,11 @@ describe('sanitizeServerUrl', () => {
   })
 
   it('throws error for invalid URL', () => {
-    assert.throws(() => sanitizeServerUrl('not-a-valid-url'), {message: 'Invalid server URL: not-a-valid-url'})
+    assert.throws(() => sanitizeServerUrl('not-a-valid-url'), {message: 'Invalid server URL'})
   })
 
   it('throws error for empty string', () => {
-    assert.throws(() => sanitizeServerUrl(''), {message: 'Invalid server URL: '})
+    assert.throws(() => sanitizeServerUrl(''), {message: 'Invalid server URL'})
   })
 
   it('throws error for malformed URL', () => {
@@ -90,19 +110,15 @@ describe('sanitizeServerUrl', () => {
 })
 
 describe('readConfig', () => {
-  beforeEach(() => {
-    mockDefaultServer = null
-    mockServerList = []
-    mockRetrieveCredentials = null
+  beforeEach(async () => {
+    await rm(testTmpDir, {recursive: true, force: true})
+    await mkdir(testTmpDir, {recursive: true})
   })
 
   describe('with serverUrl and username provided', () => {
     it('returns credentials when found', async () => {
-      mockRetrieveCredentials = {
-        serverUrl: 'https://example.com',
-        username: 'testuser',
-        password: 'testpass',
-      }
+      const key = serverKey('https://example.com', 'testuser')
+      await writeConfig({active: key, servers: {[key]: {password: 'testpass'}}})
 
       const result = await readConfig(mockCtx, mockLog, 'https://example.com', 'testuser')
 
@@ -114,21 +130,18 @@ describe('readConfig', () => {
     })
 
     it('throws error when credentials not found', async () => {
-      mockRetrieveCredentials = null
+      await writeConfig({active: null, servers: {}})
 
       await assert.rejects(() => readConfig(mockCtx, mockLog, 'https://example.com', 'testuser'), {
-        message: 'No credentials found for https://example.com (testuser)',
+        message: 'No credentials found for testuser@example.com',
       })
     })
   })
 
   describe('with default server', () => {
     it('returns default server credentials when available', async () => {
-      mockDefaultServer = {
-        serverUrl: 'https://default-server.com',
-        username: 'defaultuser',
-        password: 'defaultpass',
-      }
+      const key = serverKey('https://default-server.com', 'defaultuser')
+      await writeConfig({active: key, servers: {[key]: {password: 'defaultpass'}}})
 
       const result = await readConfig(mockCtx, mockLog)
 
@@ -140,18 +153,15 @@ describe('readConfig', () => {
     })
 
     it('throws login prompt when no servers exist', async () => {
-      mockDefaultServer = null
-      mockServerList = []
+      await writeConfig({active: null, servers: {}})
 
       await assert.rejects(() => readConfig(mockCtx, mockLog), {message: 'Not logged in. Please run: wondoc login'})
     })
 
     it('throws set-default prompt when servers exist but no default', async () => {
-      mockDefaultServer = null
-      mockServerList = [
-        {serverUrl: 'https://server1.com', username: 'u1'},
-        {serverUrl: 'https://server2.com', username: 'u2'},
-      ]
+      const key1 = serverKey('https://server1.com', 'u1')
+      const key2 = serverKey('https://server2.com', 'u2')
+      await writeConfig({active: null, servers: {[key1]: {password: 'p1'}, [key2]: {password: 'p2'}}})
 
       await assert.rejects(() => readConfig(mockCtx, mockLog), {
         message: 'No default server set. Please run: wondoc login --set-default',
@@ -161,16 +171,18 @@ describe('readConfig', () => {
 })
 
 describe('resolveSource', () => {
-  beforeEach(() => {
-    mockDefaultServer = null
-    mockServerList = []
-    mockRetrieveCredentials = null
+  beforeEach(async () => {
+    await rm(testTmpDir, {recursive: true, force: true})
+    await mkdir(testTmpDir, {recursive: true})
   })
 
   it('resolves full URL source with credentials from server list', async () => {
-    mockDefaultServer = {serverUrl: 'https://default.com', username: 'user1', password: 'pass1'}
-    mockServerList = [{serverUrl: 'https://other.com', username: 'user2'}]
-    mockRetrieveCredentials = {serverUrl: 'https://other.com', username: 'user2', password: 'pass2'}
+    const defaultKey = serverKey('https://default.com', 'user1')
+    const otherKey = serverKey('https://other.com', 'user2')
+    await writeConfig({
+      active: defaultKey,
+      servers: {[defaultKey]: {password: 'pass1'}, [otherKey]: {password: 'pass2'}},
+    })
 
     const result = await resolveSource(mockCtx, mockLog, 'https://other.com/docs')
 
@@ -178,11 +190,12 @@ describe('resolveSource', () => {
     assert.equal(result.documentPath, '/docs')
     assert.equal(result.username, 'user2')
     assert.equal(result.password, 'pass2')
-    assert.ok(result.auth) // base64 encoded
+    assert.ok(result.auth)
   })
 
   it('resolves full URL and uses default config when server matches', async () => {
-    mockDefaultServer = {serverUrl: 'https://myserver.com', username: 'admin', password: 'secret'}
+    const key = serverKey('https://myserver.com', 'admin')
+    await writeConfig({active: key, servers: {[key]: {password: 'secret'}}})
 
     const result = await resolveSource(mockCtx, mockLog, 'https://myserver.com/blog')
 
@@ -193,7 +206,8 @@ describe('resolveSource', () => {
   })
 
   it('resolves absolute path using default server', async () => {
-    mockDefaultServer = {serverUrl: 'https://default.com', username: 'user', password: 'pass'}
+    const key = serverKey('https://default.com', 'user')
+    await writeConfig({active: key, servers: {[key]: {password: 'pass'}}})
 
     const result = await resolveSource(mockCtx, mockLog, '/my-doc')
 
@@ -203,7 +217,8 @@ describe('resolveSource', () => {
   })
 
   it('resolves bare name using default server', async () => {
-    mockDefaultServer = {serverUrl: 'https://default.com', username: 'user', password: 'pass'}
+    const key = serverKey('https://default.com', 'user')
+    await writeConfig({active: key, servers: {[key]: {password: 'pass'}}})
 
     const result = await resolveSource(mockCtx, mockLog, 'my-doc')
 
@@ -212,7 +227,8 @@ describe('resolveSource', () => {
   })
 
   it('strips .git suffix from full URL', async () => {
-    mockDefaultServer = {serverUrl: 'https://myserver.com', username: 'admin', password: 'secret'}
+    const key = serverKey('https://myserver.com', 'admin')
+    await writeConfig({active: key, servers: {[key]: {password: 'secret'}}})
 
     const result = await resolveSource(mockCtx, mockLog, 'https://myserver.com/blog.git')
 
@@ -220,29 +236,21 @@ describe('resolveSource', () => {
   })
 
   it('throws when no default server and source is a path', async () => {
-    mockDefaultServer = null
+    await writeConfig({active: null, servers: {}})
 
     await assert.rejects(() => resolveSource(mockCtx, mockLog, '/my-doc'), /No default server configured/)
   })
 
   it('throws when no credentials found for server', async () => {
-    mockDefaultServer = {serverUrl: 'https://default.com', username: 'user', password: 'pass'}
-    mockServerList = [] // No matching server
-    mockRetrieveCredentials = null
+    const defaultKey = serverKey('https://default.com', 'user')
+    await writeConfig({active: defaultKey, servers: {[defaultKey]: {password: 'pass'}}})
 
     await assert.rejects(() => resolveSource(mockCtx, mockLog, 'https://unknown.com/doc'), /No credentials for/)
   })
 
-  it('throws when credentials are expired', async () => {
-    mockDefaultServer = {serverUrl: 'https://default.com', username: 'user', password: 'pass'}
-    mockServerList = [{serverUrl: 'https://other.com', username: 'user2'}]
-    mockRetrieveCredentials = null // Expired
-
-    await assert.rejects(() => resolveSource(mockCtx, mockLog, 'https://other.com/doc'), /Credentials expired/)
-  })
-
   it('generates valid base64 auth string', async () => {
-    mockDefaultServer = {serverUrl: 'https://default.com', username: 'admin', password: 'secret'}
+    const key = serverKey('https://default.com', 'admin')
+    await writeConfig({active: key, servers: {[key]: {password: 'secret'}}})
 
     const result = await resolveSource(mockCtx, mockLog, '/test')
 

@@ -245,7 +245,6 @@ skywriter <command>
 
 | Option                | Description                                                                   |
 | --------------------- | ----------------------------------------------------------------------------- |
-| `--auth-type <type>`  | Override credential storage (`file`)                                          |
 | `-s, --silent`        | Suppress all output                                                           |
 | `--json`              | Output as JSON                                                                |
 | `--log-level <level>` | Set log level (`error`, `warn`, `notice`, `http`, `info`, `verbose`, `silly`) |
@@ -260,7 +259,7 @@ Log in to a Skywriter server and save credentials.
 skywriter login http://myuser@mysite.com
 ```
 
-Options: `-y, --yes` (set as default without prompting), `--use-env` (read from `SKYWRITER_SECRET` env var)
+Options: `-y, --yes` (set as default without prompting), `--use-env` (read from `SKYWRITER_SECRET` env var), `--auth-store=file` (store credentials in config file instead of OS keychain)
 
 #### `skywriter logout`
 

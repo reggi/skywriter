@@ -1,7 +1,5 @@
 import {describe, it, mock, beforeEach, afterEach, after} from 'node:test'
 import assert from 'node:assert/strict'
-import type {CliContext} from '../../../src/cli/utils/types.ts'
-import type {PrefixLog} from '../../../src/cli/utils/prefixLog.ts'
 import {stripAnsi} from '../../helpers/stripAnsi.ts'
 
 // Shared output array - mocks and tests both push here
@@ -81,39 +79,43 @@ mock.module('@inquirer/prompts', {
   },
 })
 
-// Mock credentials module - must include all exports that other modules depend on
-// Mocks emit the same proc-log output as the real functions so snapshots
-// reflect the full CLI output the user would see.
-mock.module('../../../src/cli/utils/credentials.ts', {
+// Mock config module - must replicate log output so snapshots match
+mock.module('../../../src/cli/utils/config.ts', {
   namedExports: {
-    storeCredentials: async (
-      _ctx: CliContext,
-      cmdLog: PrefixLog,
-      serverUrl: string,
-      username: string,
-      password: string,
-      setAsDefault: boolean,
-    ) => {
-      storedCredentials.push({serverUrl, username, password, setAsDefault})
-      const host = new URL(serverUrl).host
-      const url = new URL(serverUrl)
-      url.username = username
-      const key = url.href.replace(/\/$/, '')
-      cmdLog.info(`saving credentials for ${username}@${host}`)
-      cmdLog.fs(`updating ~/.wondoc.json#servers.${key} to {}`)
-      if (setAsDefault) {
-        cmdLog.fs(`updating ~/.wondoc.json#active to ${key}`)
-      }
+    sanitizeServerUrl: (url: string) => {
+      const parsed = new URL(url)
+      return `${parsed.protocol}//${parsed.host}`
     },
-    getCredentialBackendName: () => 'test-backend',
-    listServers: async (_ctx: CliContext, cmdLog: PrefixLog) => {
-      if (mockServerList.length > 0) {
-        cmdLog.fs('reading ~/.wondoc.json')
-      }
-      return mockServerList
-    },
-    getDefaultServer: async () => null,
-    retrieveCredentials: async () => null,
+    readServerConfig: async (
+      _ctx: {cliId: string},
+      cmdLog: {info: (msg: string) => void; fs: (msg: string) => void},
+    ) => ({
+      listServers: () => {
+        if (mockServerList.length > 0) {
+          cmdLog.fs('reading ~/.wondoc.json')
+        }
+        return mockServerList
+      },
+      storeCredentials: async (
+        serverUrl: string,
+        username: string,
+        password: string,
+        options: {setAsDefault?: boolean},
+      ) => {
+        const setAsDefault = options.setAsDefault ?? true
+        storedCredentials.push({serverUrl, username, password, setAsDefault})
+        const host = new URL(serverUrl).host
+        const url = new URL(serverUrl)
+        url.username = username
+        const key = url.href.replace(/\/$/, '')
+        cmdLog.info(`saving credentials for ${username}@${host}`)
+        cmdLog.fs(`updating ~/.wondoc.json#servers.${key} to {}`)
+        if (setAsDefault) {
+          cmdLog.fs(`updating ~/.wondoc.json#active to ${key}`)
+        }
+      },
+      getCredentialBackendName: () => 'test-backend',
+    }),
   },
 })
 

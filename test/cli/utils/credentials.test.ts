@@ -18,7 +18,9 @@ const mockCtx: CliContext = {
 
 const mockLog: PrefixLog = {
   info: () => {},
-  warn: () => {},
+  warn: (msg: string) => {
+    consoleWarnings.push(msg)
+  },
   error: () => {},
   verbose: () => {},
   exec: () => {},
@@ -49,15 +51,46 @@ mock.module('node:os', {
 })
 
 // Import after mocking
-const {
-  storeCredentials,
-  retrieveCredentials,
-  deleteCredentials,
-  listServers,
-  getDefaultServer,
-  setDefaultServer,
-  getCredentialBackendName,
-} = await import('../../../src/cli/utils/credentials.ts')
+const {getCredentialBackendName} = await import('../../../src/cli/utils/credentials.ts')
+const {readServerConfig} = await import('../../../src/cli/utils/config.ts')
+
+// Helper: read config and call methods (re-reads each time since tests write to disk)
+async function storeCredentials(
+  ctx: CliContext,
+  log: PrefixLog,
+  serverUrl: string,
+  username: string,
+  password: string,
+  setAsDefault = true,
+) {
+  const config = await readServerConfig(ctx, log)
+  await config.storeCredentials(serverUrl, username, password, {setAsDefault})
+}
+
+async function retrieveCredentials(ctx: CliContext, log: PrefixLog, serverUrl: string, username: string) {
+  const config = await readServerConfig(ctx, log)
+  return config.retrieveCredentials(serverUrl, username)
+}
+
+async function deleteCredentials(ctx: CliContext, log: PrefixLog, serverUrl: string, username: string) {
+  const config = await readServerConfig(ctx, log)
+  await config.deleteCredentials(serverUrl, username)
+}
+
+async function listServers(ctx: CliContext, log: PrefixLog) {
+  const config = await readServerConfig(ctx, log)
+  return config.listServers()
+}
+
+async function getDefaultServer(ctx: CliContext, log: PrefixLog) {
+  const config = await readServerConfig(ctx, log)
+  return config.getDefaultServer()
+}
+
+async function setDefaultServer(ctx: CliContext, log: PrefixLog, serverUrl: string, username: string) {
+  const config = await readServerConfig(ctx, log)
+  await config.setDefaultServer(serverUrl, username)
+}
 
 // Capture proc-log output
 let consoleOutput: string[] = []
@@ -99,20 +132,19 @@ describe('credentials (File-based storage)', () => {
   })
 
   describe('storeCredentials', () => {
-    it('stores credentials in file and shows warning', async () => {
+    it('stores credentials in config file and shows warning', async () => {
       await storeCredentials(mockCtx, mockLog, 'https://fileserver.com', 'fileuser', 'filepass')
 
       // Should have shown warning about plaintext storage
-      assert.ok(consoleWarnings.some(w => w.includes('Warning')))
       assert.ok(consoleWarnings.some(w => w.includes('plain text')))
 
-      // Verify credentials were stored in file
-      const credFile = join(testTmpDir, '.wondoc-cli-credentials.json')
-      const content = await readFile(credFile, 'utf-8')
-      const creds = JSON.parse(content)
+      // Verify credentials were stored in config file
+      const configFile = join(testTmpDir, '.wondoc.json')
+      const content = await readFile(configFile, 'utf-8')
+      const config = JSON.parse(content)
 
-      assert.ok(creds['https://fileserver.com:fileuser'])
-      assert.equal(creds['https://fileserver.com:fileuser'].password, 'filepass')
+      assert.ok(config.servers['https://fileuser@fileserver.com'])
+      assert.equal(config.servers['https://fileuser@fileserver.com'].password, 'filepass')
     })
 
     it('sets server as default', async () => {
@@ -217,13 +249,15 @@ describe('credentials (File-based storage)', () => {
       await deleteCredentials(mockCtx, mockLog, 'https://nonexistent.com', 'nobody')
     })
 
-    it('writes empty object when last credential is deleted', async () => {
+    it('removes password from config when credential is deleted', async () => {
       await storeCredentials(mockCtx, mockLog, 'https://onlyone.com', 'onlyuser', 'pass')
       await deleteCredentials(mockCtx, mockLog, 'https://onlyone.com', 'onlyuser')
 
-      const credFile = join(testTmpDir, '.wondoc-cli-credentials.json')
-      const content = await readFile(credFile, 'utf-8')
-      assert.equal(content, '{}')
+      // Verify password was removed from config
+      const configFile = join(testTmpDir, '.wondoc.json')
+      const content = await readFile(configFile, 'utf-8')
+      const config = JSON.parse(content)
+      assert.equal(config.servers?.['https://onlyuser@onlyone.com']?.password, undefined)
     })
   })
 

@@ -1,7 +1,5 @@
 import {describe, it, afterEach, beforeEach, mock} from 'node:test'
 import assert from 'node:assert/strict'
-import type {CliContext} from '../../../src/cli/utils/types.ts'
-import type {PrefixLog} from '../../../src/cli/utils/prefixLog.ts'
 import {stripAnsi} from '../../helpers/stripAnsi.ts'
 
 // Shared output array - mocks and tests both push here
@@ -12,22 +10,27 @@ let mockServers: Array<{serverUrl: string; username: string; active: boolean}> =
 let lastSetDefault: {serverUrl: string; username: string} | null = null
 let mockSelectResult: {serverUrl: string; username: string; active: boolean} | null = null
 
-// Mock credentials module - emits same proc-log output as real functions
-mock.module('../../../src/cli/utils/credentials.ts', {
+// Mock config module - emits same proc-log output as real functions
+mock.module('../../../src/cli/utils/config.ts', {
   namedExports: {
-    listServers: async (_ctx: CliContext, cmdLog: PrefixLog) => {
-      if (mockServers.length > 0) {
-        cmdLog.fs('reading ~/.wondoc.json')
-      }
-      return mockServers
-    },
-    setDefaultServer: async (_ctx: CliContext, cmdLog: PrefixLog, serverUrl: string, username: string) => {
-      lastSetDefault = {serverUrl, username}
-      const url = new URL(serverUrl)
-      url.username = username
-      const key = url.href.replace(/\/$/, '')
-      cmdLog.fs(`updating ~/.wondoc.json#active to ${key}`)
-    },
+    readServerConfig: async (
+      _ctx: {cliId: string},
+      cmdLog: {info: (msg: string) => void; fs: (msg: string) => void},
+    ) => ({
+      listServers: () => {
+        if (mockServers.length > 0) {
+          cmdLog.fs('reading ~/.wondoc.json')
+        }
+        return mockServers
+      },
+      setDefaultServer: async (serverUrl: string, username: string) => {
+        lastSetDefault = {serverUrl, username}
+        const url = new URL(serverUrl)
+        url.username = username
+        const key = url.href.replace(/\/$/, '')
+        cmdLog.fs(`updating ~/.wondoc.json#active to ${key}`)
+      },
+    }),
   },
 })
 

@@ -1,5 +1,5 @@
 import {select, confirm} from '@inquirer/prompts'
-import {listServers, deleteCredentials} from '../utils/credentials.ts'
+import {readServerConfig} from '../utils/config.ts'
 import type {CliCommand} from '../utils/types.ts'
 import {createPrefixLog} from '../utils/prefixLog.ts'
 
@@ -31,7 +31,8 @@ export const logout: CliCommand<[LogoutOptions?]> = async (ctx, options = {}) =>
     }
   }
 
-  const servers = await listServers(ctx, cmdLog)
+  const config = await readServerConfig(ctx, cmdLog)
+  const servers = config.listServers()
 
   if (servers.length === 0) {
     cmdLog.info('No servers configured.')
@@ -47,7 +48,7 @@ export const logout: CliCommand<[LogoutOptions?]> = async (ctx, options = {}) =>
       if (!confirmed) return
     }
 
-    await deleteCredentials(ctx, cmdLog, server.serverUrl, server.username)
+    await config.deleteCredentials(server.serverUrl, server.username)
     cmdLog.info(`✓ Logged out from: ${server.serverUrl} (${server.username})`)
   }
 

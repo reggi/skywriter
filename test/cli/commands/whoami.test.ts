@@ -20,24 +20,21 @@ let mockServers: ServerInfo[] = []
 let mockCredentials: {serverUrl: string; username: string; password: string} | null = null
 let mockFetchResponse: {ok: boolean; status: number; statusText: string} = {ok: true, status: 200, statusText: 'OK'}
 
-// Mock credentials module
-mock.module('../../../src/cli/utils/credentials.ts', {
+// Mock config module
+mock.module('../../../src/cli/utils/config.ts', {
   namedExports: {
-    listServers: async (_ctx: unknown, cmdLog: PrefixLog) => {
-      if (mockServers.length > 0) {
-        cmdLog.fs('reading ~/.wondoc.json')
-      }
-      return mockServers
-    },
-    retrieveCredentials: async (_ctx: unknown, cmdLog: PrefixLog, serverUrl: string, username: string) => {
-      cmdLog.info(`accessing credentials for ${username}@${new URL(serverUrl).host}`)
-      return mockCredentials
-    },
-    getCredentialBackendName: () => 'test-backend',
-    storeCredentials: async () => {},
-    deleteCredentials: async () => {},
-    getDefaultServer: async () => null,
-    setDefaultServer: async () => {},
+    readServerConfig: async (_ctx: unknown, cmdLog: {info: (msg: string) => void; fs: (msg: string) => void}) => ({
+      listServers: () => {
+        if (mockServers.length > 0) {
+          cmdLog.fs('reading ~/.wondoc.json')
+        }
+        return mockServers
+      },
+      retrieveCredentials: async (serverUrl: string, username: string) => {
+        cmdLog.info(`accessing credentials for ${username}@${new URL(serverUrl).host}`)
+        return mockCredentials
+      },
+    }),
   },
 })
 
