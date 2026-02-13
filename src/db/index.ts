@@ -6,14 +6,17 @@ config()
 
 let pool: Pool | null = null
 
-export async function createDatabaseContext(connectionString?: string): Promise<PoolClient> {
+export function getPool(connectionString?: string): Pool {
   if (!pool) {
     pool = new Pool({
       connectionString: connectionString || process.env.DATABASE_URL,
     })
   }
+  return pool
+}
 
-  return await pool.connect()
+export async function createDatabaseContext(connectionString?: string): Promise<PoolClient> {
+  return await getPool(connectionString).connect()
 }
 
 export async function closeDatabaseContext(client: PoolClient): Promise<void> {

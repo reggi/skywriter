@@ -1,11 +1,11 @@
 import {serve} from '@hono/node-server'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../db/index.ts'
+import {getPool, closePool} from '../db/index.ts'
 import {createApp} from '../server/index.ts'
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5455/skywriter'
-const client = await createDatabaseContext(connectionString)
+const pool = getPool(connectionString)
 
-const app = await createApp(client)
+const app = await createApp(pool)
 
 const port = Number(process.env.PORT) || 3000
 console.log(`Server is running on http://localhost:${port}`)
@@ -18,7 +18,6 @@ serve({
 // Cleanup on exit
 async function shutdown(signal: string) {
   console.log(`\nReceived ${signal}, shutting down...`)
-  await closeDatabaseContext(client)
   await closePool()
   process.exit(0)
 }

@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test'
 import {signup} from './helpers/auth.js'
+import {uniqueId} from './helpers/unique-id.js'
 import {waitForEditorReady} from './helpers/editor.js'
 
 test.describe('Navigation', () => {
@@ -10,7 +11,7 @@ test.describe('Navigation', () => {
   })
 
   test('should handle non-existent paths with 404', async ({page}) => {
-    const randomPath = `/non-existent-page-${Date.now()}`
+    const randomPath = `/non-existent-page-${uniqueId()}`
     const response = await page.goto(randomPath)
     expect(response?.status()).toBe(404)
   })
@@ -25,7 +26,7 @@ test.describe('Navigation', () => {
   })
 
   test('should navigate to nested edit paths', async ({page}) => {
-    const testPath = `/test-nav-${Date.now()}/nested/path`
+    const testPath = `/test-nav-${uniqueId()}/nested/path`
     const response = await page.goto(`${testPath}/edit`)
 
     expect(response?.status()).toBe(401)
@@ -33,9 +34,9 @@ test.describe('Navigation', () => {
   })
 
   test('should preserve query parameters after login', async ({page}) => {
-    const testUsername = `nav-test-${Date.now()}`
+    const testUsername = `nav-test-${uniqueId()}`
     const testPassword = 'test-password-123'
-    const testPath = `/nav-test-${Date.now()}`
+    const testPath = `/nav-test-${uniqueId()}`
     const editPath = `${testPath}/edit`
 
     await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -46,10 +47,10 @@ test.describe('Navigation', () => {
   })
 
   test('should handle special characters in paths', async ({page}) => {
-    const testUsername = `special-test-${Date.now()}`
+    const testUsername = `special-test-${uniqueId()}`
     const testPassword = 'test-password-123'
     // Test with URL-safe path containing numbers and hyphens
-    const testPath = `/special-123-test-${Date.now()}`
+    const testPath = `/special-123-test-${uniqueId()}`
     const editPath = `${testPath}/edit`
 
     await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -60,9 +61,9 @@ test.describe('Navigation', () => {
   })
 
   test('should handle deep nested paths', async ({page}) => {
-    const testUsername = `deep-test-${Date.now()}`
+    const testUsername = `deep-test-${uniqueId()}`
     const testPassword = 'test-password-123'
-    const testPath = `/level1/level2/level3/deep-${Date.now()}`
+    const testPath = `/level1/level2/level3/deep-${uniqueId()}`
     const editPath = `${testPath}/edit`
 
     await signup(page, testUsername, testPassword, testPassword, editPath)

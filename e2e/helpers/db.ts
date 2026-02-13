@@ -83,6 +83,11 @@ export async function cleanupTestUsers(): Promise<number> {
          OR username LIKE 'test-%'
          OR username LIKE 'e2e-%'
          OR username LIKE 'git-%'
+         OR username LIKE 'parity-%'
+         OR username LIKE 'nested-%'
+         OR username LIKE 'upload-%'
+         OR username LIKE 'special-%'
+         OR username LIKE 'deep-%'
     `)
     return result.rowCount ?? 0
   } finally {

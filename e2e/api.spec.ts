@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test'
 import {signup} from './helpers/auth.js'
+import {uniqueId} from './helpers/unique-id.js'
 import {waitForEditorReady, switchToTab, clickSave, waitForSaveButtonState} from './helpers/editor.js'
 
 test.describe('API Endpoints', () => {
@@ -11,9 +12,9 @@ test.describe('API Endpoints', () => {
     })
 
     test('should return proper content-type for HTML responses', async ({page}) => {
-      const testUsername = `api-html-${Date.now()}`
+      const testUsername = `api-html-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/api-html-${Date.now()}`
+      const testPath = `/api-html-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -76,15 +77,15 @@ test.describe('API Endpoints', () => {
 
   test.describe('Document API', () => {
     test('should return 404 for non-existent documents', async ({request}) => {
-      const nonExistentPath = `/definitely-not-exists-${Date.now()}`
+      const nonExistentPath = `/definitely-not-exists-${uniqueId()}`
       const response = await request.get(nonExistentPath)
       expect(response.status()).toBe(404)
     })
 
     test('should handle query parameter for search', async ({page}) => {
-      const testUsername = `api-search-${Date.now()}`
+      const testUsername = `api-search-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/api-search-${Date.now()}`
+      const testPath = `/api-search-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       await signup(page, testUsername, testPassword, testPassword, editPath)

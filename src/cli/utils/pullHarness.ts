@@ -15,7 +15,7 @@ import type {CliCommand} from './types.ts'
  *   1. Resolving target (server, credentials, dest)
  *   2. Pulling the main repo via the primitive
  *   3. Reading settings.json to discover template_path / slot_path
- *   4. Pulling template and slot in parallel via the primitive
+ *   4. Pulling template and slot sequentially via the primitive
  *   5. Downloading uploads for all repos
  *   6. Populating cache
  */
@@ -47,7 +47,7 @@ export function pullHarness(pullPrimitive: PathOperation): CliCommand<[string?, 
       if (settings) {
         mainCtx.settings = settings
 
-        // 3. Pull/clone template and slot in parallel
+        // 3. Pull/clone template and slot sequentially for deterministic log output
         const subContexts: PathContext[] = []
 
         if (settings.template_path) {
@@ -80,7 +80,10 @@ export function pullHarness(pullPrimitive: PathOperation): CliCommand<[string?, 
           })
         }
 
-        await Promise.all(subContexts.map(subCtx => pullPrimitive(subCtx)))
+        // this prevents tests snapshots from being non-deterministic due to parallel pulls logging in random order
+        for (const subCtx of subContexts) {
+          await pullPrimitive(subCtx)
+        }
 
         // 4. Re-read settings for each sub-repo (now that they're cloned) and download uploads
         for (const subCtx of subContexts) {

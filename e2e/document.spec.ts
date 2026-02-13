@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test'
 import {signup} from './helpers/auth.js'
+import {uniqueId} from './helpers/unique-id.js'
 import {
   waitForEditorReady,
   switchToTab,
@@ -13,9 +14,9 @@ import {
 test.describe('Document CRUD', () => {
   test.describe('Create Document', () => {
     test('should create a new document with content', async ({page}) => {
-      const testUsername = `doc-create-${Date.now()}`
+      const testUsername = `doc-create-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/playwright-doc-${Date.now()}`
+      const testPath = `/playwright-doc-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -44,9 +45,9 @@ test.describe('Document CRUD', () => {
     })
 
     test('should create document with title', async ({page}) => {
-      const testUsername = `doc-title-${Date.now()}`
+      const testUsername = `doc-title-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/playwright-title-${Date.now()}`
+      const testPath = `/playwright-title-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -72,9 +73,9 @@ test.describe('Document CRUD', () => {
 
   test.describe('Read Document', () => {
     test('should display published document to anonymous users', async ({page}) => {
-      const testUsername = `doc-read-${Date.now()}`
+      const testUsername = `doc-read-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/playwright-read-${Date.now()}`
+      const testPath = `/playwright-read-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       // Create and publish document
@@ -105,9 +106,9 @@ test.describe('Document CRUD', () => {
     })
 
     test('should hide unpublished document from anonymous users', async ({page, request}) => {
-      const testUsername = `doc-unpub-${Date.now()}`
+      const testUsername = `doc-unpub-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/playwright-unpub-${Date.now()}`
+      const testPath = `/playwright-unpub-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       // Create document but don't publish
@@ -135,10 +136,10 @@ test.describe('Document CRUD', () => {
 
   test.describe('Update Document', () => {
     test('should update document slug', async ({page}) => {
-      const testUsername = `doc-update-${Date.now()}`
+      const testUsername = `doc-update-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const originalPath = `/playwright-original-${Date.now()}`
-      const newPath = `/playwright-renamed-${Date.now()}`
+      const originalPath = `/playwright-original-${uniqueId()}`
+      const newPath = `/playwright-renamed-${uniqueId()}`
       const editPath = `${originalPath}/edit`
 
       await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -160,9 +161,9 @@ test.describe('Document CRUD', () => {
     })
 
     test('should update document content', async ({page}) => {
-      const testUsername = `doc-content-${Date.now()}`
+      const testUsername = `doc-content-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/playwright-content-${Date.now()}`
+      const testPath = `/playwright-content-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -200,9 +201,9 @@ test.describe('Document CRUD', () => {
 
   test.describe('Delete Document', () => {
     test('should delete document via API', async ({page}) => {
-      const testUsername = `doc-delete-${Date.now()}`
+      const testUsername = `doc-delete-${uniqueId()}`
       const testPassword = 'test-password-123'
-      const testPath = `/playwright-delete-${Date.now()}`
+      const testPath = `/playwright-delete-${uniqueId()}`
       const editPath = `${testPath}/edit`
 
       // Create document
