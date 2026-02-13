@@ -462,6 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
   resizeCanvas()
   window.addEventListener('resize', resizeCanvas)
   drawLogo()
+  document.querySelector('.sky-container').style.visibility = 'visible'
   animate()
 
   // Observe body class changes to re-render logo when toggling rainbow mode
