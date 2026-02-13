@@ -14,6 +14,7 @@
 !.release-please-manifest.json
 
 # Allow top-level config files
+!CHANGELOG.md
 !LICENSE
 !README.md
 !RAILWAY_DEPLOYMENT.md

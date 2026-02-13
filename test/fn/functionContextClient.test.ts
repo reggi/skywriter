@@ -2,6 +2,7 @@ import {describe, it, mock, beforeEach, afterEach} from 'node:test'
 import assert from 'node:assert/strict'
 import {clearCache, functionContextClient} from '../../src/fn/functionContextClient.ts'
 import {promises as fs} from 'fs'
+import {createHash} from 'crypto'
 
 describe('clearCache', () => {
   const testCacheDir = './test-cache-clear'
@@ -62,10 +63,9 @@ describe('functionContextClient', () => {
       const cachedData = {html: '<p>cached</p>', path: '/cached-doc'}
 
       // We need to compute the actual cache key used by the function
-      const crypto = await import('crypto')
       const args = {query: {path: '/test-doc'}}
       const argsString = JSON.stringify(args, Object.keys(args).sort())
-      const hash = crypto.createHash('sha256').update(`getPage:${argsString}`).digest('hex').substring(0, 16)
+      const hash = createHash('sha256').update(`getPage:${argsString}`).digest('hex').substring(0, 16)
       const cacheKey = `getPage-${hash}.json`
 
       await fs.writeFile(`./cache/${cacheKey}`, JSON.stringify(cachedData))
@@ -347,10 +347,9 @@ describe('functionContextClient', () => {
       await fs.mkdir('./cache', {recursive: true})
       const cachedData = {html: '<p>default cache</p>'}
 
-      const crypto = await import('crypto')
       const args = {query: {path: '/default-cache-test'}}
       const argsString = JSON.stringify(args, Object.keys(args).sort())
-      const hash = crypto.createHash('sha256').update(`getPage:${argsString}`).digest('hex').substring(0, 16)
+      const hash = createHash('sha256').update(`getPage:${argsString}`).digest('hex').substring(0, 16)
       const cacheKey = `getPage-${hash}.json`
 
       await fs.writeFile(`./cache/${cacheKey}`, JSON.stringify(cachedData))
@@ -389,10 +388,9 @@ describe('functionContextClient', () => {
         await new Promise(resolve => setTimeout(resolve, 100))
 
         // Verify cache was written
-        const crypto = await import('crypto')
         const args = {query: {path: '/cache-write-test'}}
         const argsString = JSON.stringify(args, Object.keys(args).sort())
-        const hash = crypto.createHash('sha256').update(`getPage:${argsString}`).digest('hex').substring(0, 16)
+        const hash = createHash('sha256').update(`getPage:${argsString}`).digest('hex').substring(0, 16)
         const cacheKey = `getPage-${hash}.json`
 
         const cachedContent = await fs.readFile(`./cache/${cacheKey}`, 'utf-8')
