@@ -20,7 +20,6 @@
 
 html,
 body {
-  overflow-x: hidden;
   width: 100%;
 }
 
@@ -38,6 +37,7 @@ body {
   height: 40vh;
   background: #5eb3f6;
   overflow: hidden;
+  visibility: hidden;
 }
 
 #skyCanvas {

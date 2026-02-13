@@ -5,9 +5,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skywriter - Open Source Project</title>
-  <meta name="description" content="Skywriter - An open source project documentation">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <title><%= slot.title %></title>
+  <meta name="description" content="Skywriter is an open-source, self-hosted platform for publishing one-off HTML pages. Write in Markdown, HTML, or ETA, store everything in PostgreSQL, and serve each page at its own URL.">
+  <meta name="keywords" content="skywriter, static site generator, self-hosted, personal website, html publishing, markdown, postgresql, open source, indieweb, web publishing, node.js, cms">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Skywriter – Self-Hosted Platform for Publishing HTML Pages">
+  <meta property="og:description" content="Create minimal, thoughtful web experiences. Publish self-contained HTML pages with Markdown, CSS, JavaScript, and data—all stored in PostgreSQL and served at their own URL.">
+  <meta property="og:image" content="<%= path %>/uploads/banner.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Skywriter – Self-Hosted HTML Publishing Platform">
+  <meta name="twitter:description" content="An open-source platform for publishing one-off HTML pages. Markdown, HTML, ETA templating, PostgreSQL storage, and a built-in web editor.">
+  <meta name="twitter:image" content="<%= path %>/uploads/banner.png">
+  <link rel="icon" type="image/x-icon" href="<%= path %>/uploads/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="<%= path %>/uploads/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="<%= path %>/uploads/favicon-16x16.png">
+  <link rel="icon" type="image/svg+xml" href="<%= path %>/uploads/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="<%= path %>/uploads/apple-touch-icon.png">
+  <link rel="manifest" href="<%= path %>/uploads/site.webmanifest">
+  <meta name="msapplication-config" content="<%= path %>/uploads/browserconfig.xml">
+  <meta name="theme-color" content="#4491E2">
+  <link rel="stylesheet" href="<%= path %>/uploads/atom-one-dark.min.css">
 </head>
 <body>
   <header class="sky-container" role="banner">
@@ -45,11 +62,7 @@
       <%= slot.html %>
     </main>
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script>
-    document.querySelectorAll('pre code').forEach(el => {
-      hljs.highlightElement(el);
-    });
-  </script>
+  <script src="<%= path %>/uploads/highlight.min.js"></script>
+  <script>document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));</script>
 </body>
 </html>
