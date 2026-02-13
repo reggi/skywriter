@@ -43,6 +43,8 @@ export interface AceEditor {
     getScrollTop(): number
     setScrollTop(top: number): void
     setMode(mode: string): void
+    setOption(name: string, value: unknown): void
+    getUseWrapMode(): boolean
     getLine(row: number): string
     getTokenAt(row: number, column: number): {type: string; value: string} | null
   }

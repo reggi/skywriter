@@ -351,6 +351,7 @@ body {
                   <li><a href="#uploads" class="settings-nav-link">Uploads</a></li>
                   <li><a href="#redirects" class="settings-nav-link">Redirects</a></li>
                   <li><a href="#api-links" class="settings-nav-link">API Links</a></li>
+                  <li><a href="#browser-settings" class="settings-nav-link">Browser</a></li>
                   <li><a href="#danger-zone" class="settings-nav-link">Danger Zone</a></li>
                 </ul>
               </nav>
@@ -475,6 +476,20 @@ body {
                             .join('')
                         : '<div class="help-text">No API links until doc exists</div>'
                     }
+                  </div>
+                </div>
+              </section>
+
+              <section class="settings-section" id="browser-settings">
+                <h2 class="settings-section-title">Browser</h2>
+                <div class="settings-section-body">
+                  <p class="help-text" style="margin-top:0;margin-bottom:1rem;">These settings are stored in your browser's local storage.</p>
+                  <div class="form-group">
+                    <label for="word-wrap-toggle">
+                      <input type="checkbox" id="word-wrap-toggle" checked />
+                      Word wrap
+                    </label>
+                    <p class="help-text">Wrap long lines in the editor (<kbd class="shortcut-mod">Ctrl</kbd>+\\)</p>
                   </div>
                 </div>
               </section>
