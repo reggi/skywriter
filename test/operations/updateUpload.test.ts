@@ -1,6 +1,6 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {updateUpload} from '../../src/operations/updateUpload.ts'
 import {getUploads} from '../../src/operations/getUploads.ts'
@@ -10,11 +10,14 @@ import type {DocumentId, UploadId} from '../../src/operations/types.ts'
 
 describe('updateUpload operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   const createdDocumentIds: number[] = []
   const testId = Date.now()
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   afterEach(async () => {
@@ -37,8 +40,7 @@ describe('updateUpload operation', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
     await cleanupTestUploads()
   })
 

@@ -1,6 +1,6 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {createRoute} from '../../src/operations/createRoute.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import type {PoolClient} from 'pg'
@@ -8,12 +8,15 @@ import type {DocumentId} from '../../src/operations/types.ts'
 
 describe('createRoute operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   const createdDocumentIds: number[] = []
   const createdRouteIds: number[] = []
   const testId = Date.now() // Unique identifier for this test run
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   afterEach(async () => {
@@ -47,8 +50,7 @@ describe('createRoute operation', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
   })
 
   it('should create a route for an existing document', async () => {

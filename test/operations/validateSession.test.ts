@@ -1,6 +1,6 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {signup} from '../../src/operations/signup.ts'
 import {createSession} from '../../src/operations/createSession.ts'
 import {validateSession} from '../../src/operations/validateSession.ts'
@@ -8,12 +8,15 @@ import type {PoolClient} from 'pg'
 
 describe('validateSession operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   const createdUserIds: number[] = []
   const createdSessionIds: string[] = []
   const testId = Date.now()
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   afterEach(async () => {
@@ -40,8 +43,7 @@ describe('validateSession operation', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
   })
 
   it('should return valid result for active session', async () => {

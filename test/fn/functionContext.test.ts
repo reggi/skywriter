@@ -1,7 +1,7 @@
 import {describe, it, beforeEach, before, after} from 'node:test'
 import assert from 'node:assert/strict'
 import {functionContext} from '../../src/fn/functionContext.ts'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {removeDocument} from '../../src/operations/removeDocument.ts'
 import {getDualDocument} from '../../src/operations/getDualDocument.ts'
@@ -12,17 +12,17 @@ import type {RenderedDoc} from '../../src/render/utils/base.ts'
 
 describe('functionContext', () => {
   let client: PoolClient
+  let cleanup: () => Promise<void>
   const testId = Date.now()
 
   before(async () => {
-    const connectionString =
-      process.env.DATABASE_URL || 'postgresql://astrodoc:astrodoc_password@localhost:5455/astrodoc'
-    client = await createDatabaseContext(connectionString)
+    const tc = await createTestContext()
+    client = tc.client
+    cleanup = tc.cleanup
   })
 
   after(async () => {
-    await closeDatabaseContext(client)
-    await closePool()
+    await cleanup()
     await cleanupTestUploads()
   })
 

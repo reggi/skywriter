@@ -1,6 +1,6 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {addRedirect} from '../../src/operations/addRedirect.ts'
 import type {PoolClient} from 'pg'
@@ -8,11 +8,14 @@ import type {DocumentId} from '../../src/operations/types.ts'
 
 describe('addRedirect operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   const createdDocumentIds: number[] = []
   const testId = Date.now() // Unique identifier for this test run
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   afterEach(async () => {
@@ -36,8 +39,7 @@ describe('addRedirect operation', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
   })
 
   it('should add a redirect to an existing document', async () => {

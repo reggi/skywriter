@@ -1,7 +1,7 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
 import {randomUUID} from 'node:crypto'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {getRenderDocument} from '../../src/operations/getRenderDocument.ts'
 import {addRedirect} from '../../src/operations/addRedirect.ts'
@@ -10,12 +10,15 @@ import type {PoolClient} from 'pg'
 
 describe('getRenderDocument operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   const createdDocumentIds: number[] = []
 
   const uniquePath = (base: string) => `${base}-${randomUUID()}`
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   afterEach(async () => {
@@ -39,8 +42,7 @@ describe('getRenderDocument operation', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
     await cleanupTestUploads()
   })
 

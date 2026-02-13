@@ -1,16 +1,19 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {getDualDocuments} from '../../src/operations/getDualDocuments.ts'
 import type {PoolClient} from 'pg'
 
 describe('getMany', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   const createdDocumentIds: number[] = []
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   afterEach(async () => {
@@ -34,8 +37,7 @@ describe('getMany', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
   })
 
   it('should return all documents', async () => {
