@@ -1,6 +1,6 @@
 import {describe, it, before, after} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createDatabaseContext, closeDatabaseContext, getPool, closePool} from '../../src/db/index.ts'
 import {createApp} from '../../src/server/index.ts'
 import {findDocument} from '../../src/operations/findDocument.ts'
 import type {PoolClient} from 'pg'
@@ -34,19 +34,20 @@ describe('seedIfEmpty via createApp', () => {
   })
 
   it('should serve the seeded intro document at / on first server start', async () => {
+    const pool = getPool()
     const countResult = await client.query<{count: string}>('SELECT COUNT(*) as count FROM documents')
     const countBefore = parseInt(countResult.rows[0].count, 10)
 
     if (countBefore > 0) {
       // DB already has documents — seedIfEmpty won't run, so just verify createApp works
-      const app = await createApp(client, {seed: true})
+      const app = await createApp(pool, {seed: true})
       const res = await app.request('/')
       assert.strictEqual(res.status, 200)
       return
     }
 
     // Empty DB: createApp should trigger seedIfEmpty and seed the intro page
-    const app = await createApp(client, {seed: true})
+    const app = await createApp(pool, {seed: true})
 
     // Verify the document was created in the database
     const doc = await findDocument(client, {path: '/'})
@@ -65,11 +66,12 @@ describe('seedIfEmpty via createApp', () => {
   })
 
   it('should not seed when seed option is false', async () => {
+    const pool = getPool()
     const countResult = await client.query<{count: string}>('SELECT COUNT(*) as count FROM documents')
     const countBefore = parseInt(countResult.rows[0].count, 10)
 
     // Create app with seed disabled
-    const app = await createApp(client, {seed: false})
+    const app = await createApp(pool, {seed: false})
     assert.ok(app, 'App should be created')
 
     const countAfter = await client.query<{count: string}>('SELECT COUNT(*) as count FROM documents')
