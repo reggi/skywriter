@@ -646,14 +646,15 @@ The returned object contains the same properties available as ETA variables: `ti
 
 Returns an array of fully rendered page objects. Each item has the same shape as `fn.getPage()`.
 
-| Option           | Type                                                      | Description                                   |
-| ---------------- | --------------------------------------------------------- | --------------------------------------------- |
-| `sortBy`         | `'created_at'` \| `'updated_at'` \| `'title'` \| `'path'` | Sort field                                    |
-| `sortOrder`      | `'asc'` \| `'desc'`                                       | Sort direction                                |
-| `published`      | `boolean`                                                 | Filter by published status                    |
-| `limit`          | `number`                                                  | Max results                                   |
-| `offset`         | `number`                                                  | Skip results                                  |
-| `startsWithPath` | `string`                                                  | Filter pages by path prefix (e.g., `"/blog"`) |
+| Option             | Type                                                      | Description                                                          |
+| ------------------ | --------------------------------------------------------- | -------------------------------------------------------------------- |
+| `sortBy`           | `'created_at'` \| `'updated_at'` \| `'title'` \| `'path'` | Sort field                                                           |
+| `sortOrder`        | `'asc'` \| `'desc'`                                       | Sort direction                                                       |
+| `published`        | `boolean`                                                 | Filter by published status                                           |
+| `limit`            | `number`                                                  | Max results                                                          |
+| `offset`           | `number`                                                  | Skip results                                                         |
+| `startsWithPath`   | `string`                                                  | Filter pages by path prefix (e.g., `"/blog"`)                        |
+| `excludeTemplates` | `boolean`                                                 | Exclude pages used as a template by any other page (default: `true`) |
 
 ```javascript
 const posts = await fn.getPages({

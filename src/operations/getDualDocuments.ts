@@ -33,6 +33,7 @@ export const getDualDocuments: DbOperation<[DocumentManyQuery?], DualDocument[]>
     limit,
     offset = 0,
     startsWithPath,
+    excludeTemplates = false,
   } = options
 
   try {
@@ -53,6 +54,10 @@ export const getDualDocuments: DbOperation<[DocumentManyQuery?], DualDocument[]>
       whereClauses.push(`r.path LIKE $${paramIndex}`)
       queryParams.push(`${startsWithPath}%`)
       paramIndex++
+    }
+
+    if (excludeTemplates) {
+      whereClauses.push(`d.id NOT IN (SELECT DISTINCT template_id FROM document_records WHERE template_id IS NOT NULL)`)
     }
 
     const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''

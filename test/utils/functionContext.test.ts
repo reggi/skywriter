@@ -31,6 +31,9 @@ describe('functionContext', () => {
       `/test-function-context-1-${testId}`,
       `/test-function-context-2-${testId}`,
       `/test-function-context-3-${testId}`,
+      `/test-fc-template-${testId}`,
+      `/test-fc-page-${testId}`,
+      `/test-fc-regular-${testId}`,
     ]
     for (const path of paths) {
       try {
@@ -275,6 +278,70 @@ describe('functionContext', () => {
 
       assert.ok(Array.isArray(result), 'Should return an array')
       assert.equal(result.length, 1, 'Should return exactly 1 document due to limit')
+    })
+
+    it('should exclude template documents by default', async () => {
+      // Create a template document
+      const templateResult = await upsert(client, {
+        path: `/test-fc-template-${testId}`,
+        title: 'Template',
+        content: '# Template',
+        published: true,
+      })
+
+      // Create a page that uses the template (via template_id on its record)
+      await upsert(client, {
+        path: `/test-fc-page-${testId}`,
+        title: 'Page',
+        content: '# Page',
+        published: true,
+        template_id: templateResult.id,
+      })
+
+      // Create a regular page (no template usage)
+      await upsert(client, {
+        path: `/test-fc-regular-${testId}`,
+        title: 'Regular',
+        content: '# Regular',
+        published: true,
+      })
+
+      const mockDoc = {path: '/some-path'} as unknown as {path: string}
+      const ctx = functionContext(client, mockDoc)
+
+      // Default call should exclude the template document (3 docs created, template excluded = 2 results)
+      const result = await ctx.getPages({startsWithPath: `/test-fc-`})
+      assert.equal(result.length, 2, 'Should return 2 documents (template excluded by default)')
+
+      // With excludeTemplates=false, all 3 documents should be returned
+      const resultAll = await ctx.getPages({startsWithPath: `/test-fc-`, excludeTemplates: false})
+      assert.equal(resultAll.length, 3, 'Should return 3 documents when excludeTemplates is false')
+    })
+
+    it('should include template documents when excludeTemplates is false', async () => {
+      // Create a template document
+      const templateResult = await upsert(client, {
+        path: `/test-fc-template-${testId}`,
+        title: 'Template',
+        content: '# Template',
+        published: true,
+      })
+
+      // Create a page that uses the template
+      await upsert(client, {
+        path: `/test-fc-page-${testId}`,
+        title: 'Page',
+        content: '# Page',
+        published: true,
+        template_id: templateResult.id,
+      })
+
+      const mockDoc = {path: '/some-path'} as unknown as {path: string}
+      const ctx = functionContext(client, mockDoc)
+
+      // Explicitly opt out of excluding templates — both documents should be returned
+      const result = await ctx.getPages({startsWithPath: `/test-fc-`, excludeTemplates: false})
+      assert.equal(result.length, 2, 'Should return 2 documents when excludeTemplates is false')
     })
   })
 

@@ -421,6 +421,101 @@ describe('getMany', () => {
     }
   })
 
+  describe('excludeTemplates filter', () => {
+    it('should exclude documents used as a template by another document', async () => {
+      try {
+        // Create a template document
+        const template = await upsert(ctx, {path: '/tpl-exclude-1', title: 'Template', content: 'Template content'})
+        createdDocumentIds.push(template.id)
+
+        // Create a document that uses the template
+        const page = await upsert(ctx, {
+          path: '/page-exclude-1',
+          title: 'Page',
+          content: 'Page content',
+          template_id: template.id,
+        })
+        createdDocumentIds.push(page.id)
+
+        const allResults = await getDualDocuments(ctx, {excludeTemplates: true})
+        const results = allResults.filter(doc => [template.id, page.id].includes(doc.id))
+
+        assert.strictEqual(results.length, 1)
+        assert.strictEqual(results[0].path, '/page-exclude-1')
+      } catch (error) {
+        throw error
+      }
+    })
+
+    it('should include template documents when excludeTemplates is false', async () => {
+      try {
+        const template = await upsert(ctx, {path: '/tpl-include-1', title: 'Template', content: 'Template content'})
+        createdDocumentIds.push(template.id)
+
+        const page = await upsert(ctx, {
+          path: '/page-include-1',
+          title: 'Page',
+          content: 'Page content',
+          template_id: template.id,
+        })
+        createdDocumentIds.push(page.id)
+
+        const allResults = await getDualDocuments(ctx, {excludeTemplates: false})
+        const results = allResults.filter(doc => [template.id, page.id].includes(doc.id))
+
+        assert.strictEqual(results.length, 2)
+      } catch (error) {
+        throw error
+      }
+    })
+
+    it('should not exclude documents that are not used as a template', async () => {
+      try {
+        const doc1 = await upsert(ctx, {path: '/no-tpl-1', title: 'Doc 1', content: 'Content'})
+        createdDocumentIds.push(doc1.id)
+        const doc2 = await upsert(ctx, {path: '/no-tpl-2', title: 'Doc 2', content: 'Content'})
+        createdDocumentIds.push(doc2.id)
+
+        const allResults = await getDualDocuments(ctx, {excludeTemplates: true})
+        const results = allResults.filter(doc => [doc1.id, doc2.id].includes(doc.id))
+
+        assert.strictEqual(results.length, 2)
+      } catch (error) {
+        throw error
+      }
+    })
+
+    it('should combine excludeTemplates with startsWithPath filter', async () => {
+      try {
+        const template = await upsert(ctx, {
+          path: '/blog/tpl-combo',
+          title: 'Blog Template',
+          content: 'Template',
+        })
+        createdDocumentIds.push(template.id)
+
+        const page = await upsert(ctx, {
+          path: '/blog/post-combo',
+          title: 'Blog Post',
+          content: 'Post',
+          template_id: template.id,
+        })
+        createdDocumentIds.push(page.id)
+
+        const otherPage = await upsert(ctx, {path: '/blog/other-combo', title: 'Other', content: 'Other'})
+        createdDocumentIds.push(otherPage.id)
+
+        const allResults = await getDualDocuments(ctx, {excludeTemplates: true, startsWithPath: '/blog/'})
+        const results = allResults.filter(doc => [template.id, page.id, otherPage.id].includes(doc.id))
+
+        assert.strictEqual(results.length, 2)
+        assert.ok(results.every(doc => doc.path !== '/blog/tpl-combo'))
+      } catch (error) {
+        throw error
+      }
+    })
+  })
+
   describe('startsWithPath filter', () => {
     it('should filter documents by path prefix', async () => {
       try {
