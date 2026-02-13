@@ -35,6 +35,16 @@ describe('functionContext', () => {
       `/test-fc-template-${testId}`,
       `/test-fc-page-${testId}`,
       `/test-fc-regular-${testId}`,
+      `/test-fc-recur-self-${testId}`,
+      `/test-fc-recur-other-${testId}`,
+      `/test-fc-sibling-a-${testId}`,
+      `/test-fc-sibling-b-${testId}`,
+      `/test-fc-sibling-c-${testId}`,
+      `/test-fc-merge-a-${testId}`,
+      `/test-fc-merge-b-${testId}`,
+      `/test-fc-merge-c-${testId}`,
+      `/test-fc-nohang-${testId}-caller`,
+      `/test-fc-nohang-${testId}-target`,
     ]
     for (const path of paths) {
       try {
@@ -408,6 +418,100 @@ describe('functionContext', () => {
       const result = await ctx.getUploads({path: renderDoc.path})
 
       assert.ok(Array.isArray(result), 'Should return an array')
+    })
+  })
+
+  describe('recursion prevention', () => {
+    it('should automatically exclude current document path from getPages', async () => {
+      const path1 = `/test-fc-recur-self-${testId}`
+      const path2 = `/test-fc-recur-other-${testId}`
+
+      await upsert(client, {path: path1, title: 'Self', content: '# Self', published: true})
+      await upsert(client, {path: path2, title: 'Other', content: '# Other', published: true})
+
+      const mockDoc = {path: path1} as {path: string}
+      const ctx = functionContext(client, mockDoc)
+
+      const result = await ctx.getPages({startsWithPath: `/test-fc-recur-`})
+      const paths = result.map(d => d.path)
+
+      assert.ok(!paths.includes(path1), 'Current document should be excluded from getPages results')
+      assert.ok(paths.includes(path2), 'Other documents should be included')
+    })
+
+    it('should propagate renderingPaths to exclude sibling documents', async () => {
+      const path1 = `/test-fc-sibling-a-${testId}`
+      const path2 = `/test-fc-sibling-b-${testId}`
+      const path3 = `/test-fc-sibling-c-${testId}`
+
+      await upsert(client, {path: path1, title: 'A', content: '# A', published: true})
+      await upsert(client, {path: path2, title: 'B', content: '# B', published: true})
+      await upsert(client, {path: path3, title: 'C', content: '# C', published: true})
+
+      // Simulate what getPages does: pass all sibling paths as renderingPaths
+      const renderingPaths = [path1, path2, path3]
+      const mockDoc = {path: path1} as {path: string}
+      const ctx = functionContext(client, mockDoc, {}, renderingPaths)
+
+      const result = await ctx.getPages({startsWithPath: `/test-fc-sibling-`})
+      const paths = result.map(d => d.path)
+
+      assert.strictEqual(paths.length, 0, 'All sibling paths should be excluded')
+    })
+
+    it('should merge user excludePaths with automatic exclusions', async () => {
+      const path1 = `/test-fc-merge-a-${testId}`
+      const path2 = `/test-fc-merge-b-${testId}`
+      const path3 = `/test-fc-merge-c-${testId}`
+
+      await upsert(client, {path: path1, title: 'A', content: '# A', published: true})
+      await upsert(client, {path: path2, title: 'B', content: '# B', published: true})
+      await upsert(client, {path: path3, title: 'C', content: '# C', published: true})
+
+      const mockDoc = {path: path1} as {path: string}
+      // User explicitly excludes path2 in addition to auto-excluded path1
+      const ctx = functionContext(client, mockDoc)
+      const result = await ctx.getPages({
+        startsWithPath: `/test-fc-merge-`,
+        excludePaths: [path2],
+      })
+      const paths = result.map(d => d.path)
+
+      assert.ok(!paths.includes(path1), 'Auto-excluded path should not be in results')
+      assert.ok(!paths.includes(path2), 'User-excluded path should not be in results')
+      assert.ok(paths.includes(path3), 'Non-excluded path should be in results')
+    })
+
+    it('should not hang with document whose server calls getPages', async () => {
+      const prefix = `/test-fc-nohang-${testId}`
+      const serverCode = `export default async function(ctx) {
+        const pages = await ctx.fn.getPages({ startsWithPath: '${prefix}' })
+        return { count: pages.length }
+      }`
+
+      await upsert(client, {
+        path: `${prefix}-caller`,
+        title: 'Caller',
+        content: '<%= JSON.stringify(server) %>',
+        server: serverCode,
+        published: true,
+      })
+      await upsert(client, {
+        path: `${prefix}-target`,
+        title: 'Target',
+        content: '# Target',
+        published: true,
+      })
+
+      const mockDoc = {path: `${prefix}-caller`} as {path: string}
+      const ctx = functionContext(client, mockDoc)
+
+      // This would hang without recursion prevention
+      const result = await ctx.getPages({startsWithPath: prefix})
+      assert.ok(Array.isArray(result), 'Should return without hanging')
+      // The caller is excluded (it's the current doc), so only target should appear
+      assert.strictEqual(result.length, 1)
+      assert.strictEqual(result[0].path, `${prefix}-target`)
     })
   })
 })

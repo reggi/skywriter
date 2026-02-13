@@ -14,6 +14,7 @@ export const functionContext = (
   client: PoolClient,
   doc: RenderDocument | {path: string},
   requestQuery?: Record<string, string>,
+  renderingPaths?: string[],
 ): FunctionContext => {
   const safeQuery = requestQuery || {}
 
@@ -22,7 +23,13 @@ export const functionContext = (
       return await getPage(client, query, safeQuery, functionContext)
     },
     getPages: async (options?: RenderDocumentsManyQuery) => {
-      return await getPages(client, options, safeQuery, functionContext)
+      const excludePaths = [doc.path, ...(renderingPaths || []), ...(options?.excludePaths || [])]
+      return await getPages(
+        client,
+        {...options, excludePaths},
+        safeQuery,
+        functionContext,
+      )
     },
     getUploads: async (options?: UploadsManyQuery & {path?: string}) => {
       const docQuery = options?.path ? {path: options.path} : doc

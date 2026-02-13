@@ -576,4 +576,76 @@ describe('getMany', () => {
       }
     })
   })
+
+  describe('excludePaths filter', () => {
+    it('should exclude documents with specified paths', async () => {
+      const doc1 = await upsert(ctx, {path: '/excl-a', title: 'A', content: 'Content'})
+      createdDocumentIds.push(doc1.id)
+      const doc2 = await upsert(ctx, {path: '/excl-b', title: 'B', content: 'Content'})
+      createdDocumentIds.push(doc2.id)
+      const doc3 = await upsert(ctx, {path: '/excl-c', title: 'C', content: 'Content'})
+      createdDocumentIds.push(doc3.id)
+
+      const allResults = await getDualDocuments(ctx, {excludePaths: ['/excl-b']})
+      const results = allResults.filter(doc => [doc1.id, doc2.id, doc3.id].includes(doc.id))
+
+      assert.strictEqual(results.length, 2)
+      assert.ok(results.every(doc => doc.path !== '/excl-b'))
+    })
+
+    it('should exclude multiple paths at once', async () => {
+      const doc1 = await upsert(ctx, {path: '/excl-m-a', title: 'A', content: 'Content'})
+      createdDocumentIds.push(doc1.id)
+      const doc2 = await upsert(ctx, {path: '/excl-m-b', title: 'B', content: 'Content'})
+      createdDocumentIds.push(doc2.id)
+      const doc3 = await upsert(ctx, {path: '/excl-m-c', title: 'C', content: 'Content'})
+      createdDocumentIds.push(doc3.id)
+
+      const allResults = await getDualDocuments(ctx, {excludePaths: ['/excl-m-a', '/excl-m-c']})
+      const results = allResults.filter(doc => [doc1.id, doc2.id, doc3.id].includes(doc.id))
+
+      assert.strictEqual(results.length, 1)
+      assert.strictEqual(results[0].path, '/excl-m-b')
+    })
+
+    it('should return all documents when excludePaths is empty', async () => {
+      const doc1 = await upsert(ctx, {path: '/excl-empty-a', title: 'A', content: 'Content'})
+      createdDocumentIds.push(doc1.id)
+      const doc2 = await upsert(ctx, {path: '/excl-empty-b', title: 'B', content: 'Content'})
+      createdDocumentIds.push(doc2.id)
+
+      const allResults = await getDualDocuments(ctx, {excludePaths: []})
+      const results = allResults.filter(doc => [doc1.id, doc2.id].includes(doc.id))
+
+      assert.strictEqual(results.length, 2)
+    })
+
+    it('should combine excludePaths with startsWithPath', async () => {
+      const doc1 = await upsert(ctx, {path: '/ns/excl-a', title: 'A', content: 'Content'})
+      createdDocumentIds.push(doc1.id)
+      const doc2 = await upsert(ctx, {path: '/ns/excl-b', title: 'B', content: 'Content'})
+      createdDocumentIds.push(doc2.id)
+      const doc3 = await upsert(ctx, {path: '/other/excl-c', title: 'C', content: 'Content'})
+      createdDocumentIds.push(doc3.id)
+
+      const allResults = await getDualDocuments(ctx, {
+        startsWithPath: '/ns/',
+        excludePaths: ['/ns/excl-a'],
+      })
+      const results = allResults.filter(doc => [doc1.id, doc2.id, doc3.id].includes(doc.id))
+
+      assert.strictEqual(results.length, 1)
+      assert.strictEqual(results[0].path, '/ns/excl-b')
+    })
+
+    it('should handle non-existent paths in excludePaths gracefully', async () => {
+      const doc1 = await upsert(ctx, {path: '/excl-ne-a', title: 'A', content: 'Content'})
+      createdDocumentIds.push(doc1.id)
+
+      const allResults = await getDualDocuments(ctx, {excludePaths: ['/non-existent-path']})
+      const results = allResults.filter(doc => doc.id === doc1.id)
+
+      assert.strictEqual(results.length, 1)
+    })
+  })
 })

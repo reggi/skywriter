@@ -88,6 +88,12 @@ export const functionContextFs = (getDiscovery: () => DiscoveryResult): Function
         paths = paths.filter(p => p.startsWith(options.startsWithPath!))
       }
 
+      // Filter by excludePaths
+      if (options?.excludePaths && options.excludePaths.length > 0) {
+        const excluded = new Set(options.excludePaths)
+        paths = paths.filter(p => !excluded.has(p))
+      }
+
       const resolveDocumentPath = createResolver(discovery)
 
       // Assemble and render all matching documents
