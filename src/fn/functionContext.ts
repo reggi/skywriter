@@ -24,12 +24,7 @@ export const functionContext = (
     },
     getPages: async (options?: RenderDocumentsManyQuery) => {
       const excludePaths = [doc.path, ...(renderingPaths || []), ...(options?.excludePaths || [])]
-      return await getPages(
-        client,
-        {...options, excludePaths},
-        safeQuery,
-        functionContext,
-      )
+      return await getPages(client, {...options, excludePaths}, safeQuery, functionContext)
     },
     getUploads: async (options?: UploadsManyQuery & {path?: string}) => {
       const docQuery = options?.path ? {path: options.path} : doc

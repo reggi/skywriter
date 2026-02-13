@@ -33,10 +33,7 @@ export const getPages: DbOperation<
   // to prevent mutual recursion. When a document's server code calls
   // getPages(), these paths are excluded so documents don't re-render
   // each other in a loop.
-  const renderingPaths = [
-    ...renderDocuments.map(doc => doc.path),
-    ...(options?.excludePaths || []),
-  ]
+  const renderingPaths = [...renderDocuments.map(doc => doc.path), ...(options?.excludePaths || [])]
 
   // Render all documents in parallel
   const rendered = await Promise.all(

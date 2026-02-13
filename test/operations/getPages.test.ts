@@ -65,7 +65,10 @@ describe('getPages operation', () => {
 
       assert.ok(Array.isArray(result), 'Should return an array')
       assert.strictEqual(result.length, 2)
-      assert.ok(result.every((d: RenderedDoc) => d.html), 'All documents should have rendered HTML')
+      assert.ok(
+        result.every((d: RenderedDoc) => d.html),
+        'All documents should have rendered HTML',
+      )
     })
 
     it('should respect limit option', async () => {
@@ -262,11 +265,15 @@ describe('getPages operation', () => {
       const {render} = await import('../../src/render/index.ts')
       const {getRenderDocument} = await import('../../src/operations/getRenderDocument.ts')
 
-      const renderDoc = await getRenderDocument(ctx, {path: `${prefix}-main`}, {
-        includeSlot: true,
-        includeTemplate: true,
-        draft: false,
-      })
+      const renderDoc = await getRenderDocument(
+        ctx,
+        {path: `${prefix}-main`},
+        {
+          includeSlot: true,
+          includeTemplate: true,
+          draft: false,
+        },
+      )
       assert.ok(renderDoc, 'Document should exist')
 
       const rendered = await render(renderDoc, {
