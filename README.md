@@ -101,6 +101,8 @@ export ALLOW_SIGNUP=true
 4. **Start the server:**
 
 ```bash
+npm run build
+
 npm run start
 ```
 
