@@ -1,7 +1,6 @@
 import {readFileSync, readdirSync} from 'node:fs'
 import {join, extname} from 'node:path'
 import {upsert} from './upsert.ts'
-import {findDocument} from './findDocument.ts'
 import type {EditDocumentInput, DbOperation} from './types.ts'
 import {hasEtaTemplates} from './utils/utils.ts'
 
@@ -72,7 +71,7 @@ function readDocumentDir(dir: string): EditDocumentInput & {template_path?: stri
 
 /**
  * Seeds the database with demo content if no documents exist.
- * Reads document files from the pages/skywriter/ directory bundled with the package.
+ * Reads document files from the pages/intro/ directory bundled with the package.
  */
 export const seedIfEmpty: DbOperation<[], boolean> = async client => {
   const result = await client.query<{count: string}>('SELECT COUNT(*) as count FROM documents')
@@ -81,46 +80,15 @@ export const seedIfEmpty: DbOperation<[], boolean> = async client => {
 
   console.log('No documents found in database, seeding with instructions...')
   // Resolve pages directory relative to this file's location in the package
-  const pagesDir = new URL('../../pages/skywriter', import.meta.url).pathname
+  const pagesDir = new URL('../../pages/intro', import.meta.url).pathname
 
-  // Read template document first (other documents may reference it)
-  const templateDir = join(pagesDir, 'template')
-  const templateData = readDocumentDir(templateDir)
-
-  // Extract and remove non-EditDocumentInput fields
-  const templateSlotPath = templateData.slot_path
-  delete templateData.template_path
-  delete templateData.slot_path
-
-  // Upsert template document
-  const templateResult = await upsert(client, templateData)
-
-  // Read homepage document
+  // Read homepage document (standalone, no template)
   const homepageData = readDocumentDir(pagesDir)
   homepageData.path = '/' // Ensure homepage is at root
-  const homepageTemplatePath = homepageData.template_path
   delete homepageData.template_path
   delete homepageData.slot_path
 
-  // Resolve template_path to template_id
-  if (homepageTemplatePath) {
-    const templateDoc = await findDocument(client, {path: homepageTemplatePath})
-    if (templateDoc) {
-      homepageData.template_id = templateDoc.id
-    }
-  }
-
-  // Resolve slot_path for template (the template's slot is the homepage)
-  // We need the homepage to exist first, then update the template's slot_id
-  const homepageResult = await upsert(client, homepageData)
-
-  // Now update the template's slot_id to point to the homepage
-  if (templateSlotPath && homepageResult.current) {
-    const homepageDoc = await findDocument(client, {path: templateSlotPath})
-    if (homepageDoc) {
-      await upsert(client, {id: templateResult.current!.id}, {slot_id: homepageDoc.id})
-    }
-  }
+  await upsert(client, homepageData)
 
   return true
 }
