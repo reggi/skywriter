@@ -1,4 +1,4 @@
-import type {Pool, PoolClient} from 'pg'
+import type {Pool} from 'pg'
 import type {AppMiddlewareFactory} from '../utils/types.ts'
 
 export const withDb: AppMiddlewareFactory<[pool: Pool]> = pool => {

@@ -51,7 +51,11 @@ describe('withDb', () => {
   it('should release client after request', async () => {
     const app = new Hono<AppContext>()
     let released = false
-    const mockClient = {release: () => { released = true }} as unknown as PoolClient
+    const mockClient = {
+      release: () => {
+        released = true
+      },
+    } as unknown as PoolClient
     const mockPool = createMockPool(mockClient)
 
     app.use('/*', withDb(mockPool))
@@ -66,7 +70,11 @@ describe('withDb', () => {
   it('should release client even on error', async () => {
     const app = new Hono<AppContext>()
     let released = false
-    const mockClient = {release: () => { released = true }} as unknown as PoolClient
+    const mockClient = {
+      release: () => {
+        released = true
+      },
+    } as unknown as PoolClient
     const mockPool = createMockPool(mockClient)
 
     app.use('/*', withDb(mockPool))
