@@ -180,6 +180,8 @@ export interface DocumentManyQuery {
   limit?: number
   offset?: number
   startsWithPath?: string
+  /** Exclude documents that are used as a template by any other document (default: false, but getPages defaults to true) */
+  excludeTemplates?: boolean
 }
 
 export interface SearchOptions {
