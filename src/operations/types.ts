@@ -182,6 +182,8 @@ export interface DocumentManyQuery {
   startsWithPath?: string
   /** Exclude documents that are used as a template by any other document (default: false, but getPages defaults to true) */
   excludeTemplates?: boolean
+  /** Exclude documents with these paths (used to prevent self-referential rendering loops) */
+  excludePaths?: string[]
 }
 
 export interface SearchOptions {
