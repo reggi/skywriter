@@ -5,7 +5,15 @@ import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/
 import {upsert} from '../../src/operations/upsert.ts'
 import {getPage} from '../../src/operations/getPage.ts'
 import type {PoolClient} from 'pg'
-import type {FunctionContext, RenderDocument} from '../../src/operations/types.ts'
+import type {RenderDocument} from '../../src/operations/types.ts'
+import type {FunctionContext} from '../../src/fn/types.ts'
+import type {functionContext} from '../../src/fn/functionContext.ts'
+
+const stubFnContext: FunctionContext = {
+  getPage: async () => null,
+  getPages: async () => [],
+  getUploads: async () => [],
+}
 
 describe('getPage operation', () => {
   let ctx: PoolClient
@@ -14,7 +22,7 @@ describe('getPage operation', () => {
   const uniquePath = (base: string) => `${base}-${randomUUID()}`
 
   // Simple function context factory for testing
-  const createFunctionContext: FunctionContext = (_client, _doc, _requestQuery) => ({})
+  const createFunctionContext: typeof functionContext = (_client, _doc, _requestQuery) => stubFnContext
 
   before(async () => {
     ctx = await createDatabaseContext()
@@ -183,9 +191,9 @@ describe('getPage operation', () => {
       createdDocumentIds.push(doc.current!.id)
 
       let capturedClient: PoolClient | null = null
-      const fnContext: FunctionContext = (client, _doc, _requestQuery) => {
+      const fnContext: typeof functionContext = (client, _doc, _requestQuery) => {
         capturedClient = client
-        return {}
+        return stubFnContext
       }
 
       await getPage(ctx, docPath, undefined, fnContext)
@@ -207,9 +215,9 @@ describe('getPage operation', () => {
       createdDocumentIds.push(doc.current!.id)
 
       let capturedDoc: RenderDocument | {path: string} | null = null
-      const fnContext: FunctionContext = (_client, docArg, _requestQuery) => {
+      const fnContext: typeof functionContext = (_client, docArg, _requestQuery) => {
         capturedDoc = docArg
-        return {}
+        return stubFnContext
       }
 
       await getPage(ctx, docPath, undefined, fnContext)
@@ -231,9 +239,9 @@ describe('getPage operation', () => {
       createdDocumentIds.push(doc.current!.id)
 
       let capturedQuery: Record<string, string> | undefined = undefined
-      const fnContext: FunctionContext = (_client, _doc, requestQuery) => {
+      const fnContext: typeof functionContext = (_client, _doc, requestQuery) => {
         capturedQuery = requestQuery
-        return {}
+        return stubFnContext
       }
 
       const testQuery = {param1: 'value1', param2: 'value2'}
@@ -256,9 +264,9 @@ describe('getPage operation', () => {
       createdDocumentIds.push(doc.current!.id)
 
       let capturedQuery: Record<string, string> | undefined = undefined
-      const fnContext: FunctionContext = (_client, _doc, requestQuery) => {
+      const fnContext: typeof functionContext = (_client, _doc, requestQuery) => {
         capturedQuery = requestQuery
-        return {}
+        return stubFnContext
       }
 
       await getPage(ctx, docPath, undefined, fnContext)

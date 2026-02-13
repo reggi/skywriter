@@ -24,7 +24,7 @@ mock.module('../../../src/render/index.ts', {
 })
 
 // Mock functionContextClient
-mock.module('../../../src/utils/functionContextClient.ts', {
+mock.module('../../../src/fn/functionContextClient.ts', {
   namedExports: {
     functionContextClient: () => ({
       getPage: async () => null,

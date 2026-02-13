@@ -1,6 +1,6 @@
 import {describe, it, beforeEach, before, after} from 'node:test'
 import assert from 'node:assert/strict'
-import {functionContext} from '../../src/utils/functionContext.ts'
+import {functionContext} from '../../src/fn/functionContext.ts'
 import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {removeDocument} from '../../src/operations/removeDocument.ts'
@@ -8,6 +8,7 @@ import {getDualDocument} from '../../src/operations/getDualDocument.ts'
 import {createTestUpload, cleanupTestUploads} from '../helpers/uploads.ts'
 import {getRenderDocument} from '../../src/operations/getRenderDocument.ts'
 import type {PoolClient} from 'pg'
+import type {RenderedDoc} from '../../src/render/utils/base.ts'
 
 describe('functionContext', () => {
   let client: PoolClient
@@ -107,7 +108,7 @@ describe('functionContext', () => {
       const result = await ctx.getPage({path: `/test-function-context-1-${testId}`})
 
       assert.ok(result, 'Should return a result')
-      assert.ok(result.html, 'Should have rendered html')
+      assert.ok((result as RenderedDoc).html, 'Should have rendered html')
     })
 
     it('should pass request query to nested render so templates using query work', async () => {
@@ -147,7 +148,10 @@ describe('functionContext', () => {
       const result = await ctx.getPage({path: innerPath})
 
       assert.ok(result, 'Should return a result')
-      assert.ok(result.markdown.startsWith('# wow'), `Expected markdown to start with '# wow', got: ${result.markdown}`)
+      assert.ok(
+        (result as RenderedDoc).markdown.startsWith('# wow'),
+        `Expected markdown to start with '# wow', got: ${(result as RenderedDoc).markdown}`,
+      )
     })
   })
 
@@ -224,7 +228,7 @@ describe('functionContext', () => {
 
       assert.ok(Array.isArray(result), 'Should return an array')
       // Filter to only our test documents
-      const ourDocs = result.filter(d => d.path?.includes(`-${testId}`))
+      const ourDocs = (result as RenderedDoc[]).filter(d => d.path?.includes(`-${testId}`))
       assert.ok(ourDocs.length >= 2, `Should return at least 2 documents, got ${ourDocs.length}`)
 
       // Verify all results have rendered html

@@ -1,6 +1,6 @@
 import {Hono} from 'hono'
 import {serve as honoServe} from '@hono/node-server'
-import {clearCache} from '../../utils/functionContextClient.ts'
+import {clearCache} from '../../fn/functionContextClient.ts'
 import type {Server} from 'node:http'
 import {discoverDocuments} from '../utils/discover.ts'
 import {watchForChanges} from '../utils/watchForChanges.ts'
@@ -8,18 +8,19 @@ import type {CliCommand} from '../utils/types.ts'
 import {checkDuplicatePath} from '../middleware/checkDuplicatePath.ts'
 import {redirectRoot} from '../middleware/redirectRoot.ts'
 import {serveUploads} from '../middleware/serveUploads.ts'
-import {serveDocument} from '../middleware/serveDocument.ts'
+import {serveDocument, type FnMode} from '../middleware/serveDocument.ts'
 import log from '../utils/log.ts'
 
 /**
  * Serve multiple documents from the current working directory
  * Discovers all settings.json files and routes to appropriate documents on-demand
  */
-export const serve: CliCommand<[number, boolean?, boolean?]> = async (
+export const serve: CliCommand<[number, boolean?, boolean?, FnMode?]> = async (
   ctx,
   port,
   watchFiles = true,
   clearCacheFlag = false,
+  fnMode = 'api',
 ) => {
   // Clear cache if requested
   if (clearCacheFlag) {
@@ -44,7 +45,7 @@ export const serve: CliCommand<[number, boolean?, boolean?]> = async (
     checkDuplicatePath(getDiscovery),
     redirectRoot(getDiscovery),
     serveUploads(getDiscovery),
-    serveDocument(getDiscovery, ctx),
+    serveDocument(getDiscovery, ctx, fnMode),
   )
 
   log.info(`\n🚀 Serving at http://localhost:${port}/`)

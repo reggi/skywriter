@@ -64,7 +64,7 @@ mock.module('../../../src/responder/index.ts', {
   },
 })
 
-mock.module('../../../src/utils/functionContextClient.ts', {
+mock.module('../../../src/fn/functionContextClient.ts', {
   namedExports: {
     functionContextClient: (...args: unknown[]) => {
       functionContextClientCalls.push(args)
