@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/reggi/skywriter/compare/skywriter-v1.1.0...skywriter-v1.1.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* upgrade npm and add verbose logging for OIDC publish ([56f52d9](https://github.com/reggi/skywriter/commit/56f52d985dd1ef13f51313fcf3c18f8e7421f168))
+
 ## [1.1.0](https://github.com/reggi/skywriter/compare/skywriter-v1.0.1...skywriter-v1.1.0) (2026-02-13)
 
 
