@@ -76,22 +76,12 @@ describe('host command - unit tests', () => {
       assert.equal(migrationsRun, false)
     })
 
-    it('should configure migrations table name correctly (line 19)', () => {
-      const migrationsTable = 'pgmigrations'
-      assert.equal(migrationsTable, 'pgmigrations')
-    })
-
     it('should resolve migrations directory path (line 20)', () => {
       // The command resolves migrations directory relative to the file location
       const migrationsDirUrl = new URL('../../../migrations', import.meta.url)
       const migrationsPath = migrationsDirUrl.pathname
 
       assert.ok(migrationsPath.endsWith('migrations'))
-    })
-
-    it('should set migration direction to up (line 21)', () => {
-      const direction = 'up'
-      assert.equal(direction, 'up')
     })
   })
 
@@ -184,11 +174,6 @@ describe('host command - unit tests', () => {
 
       assert.ok(message.includes('SIGTERM'))
       assert.ok(message.includes('shutting down'))
-    })
-
-    it('should exit with code 0 after shutdown (line 45)', () => {
-      const expectedExitCode = 0
-      assert.equal(expectedExitCode, 0)
     })
   })
 
