@@ -1,4 +1,5 @@
 import {test, expect} from '@playwright/test'
+import {uniqueId} from './helpers/unique-id.js'
 import {signup} from './helpers/auth.js'
 import {
   waitForEditorReady,
@@ -18,9 +19,10 @@ import {
 test.describe('Editor', () => {
   test.beforeEach(async ({page}) => {
     // Create a test user for each test with a unique document path
-    const testUsername = `test-${Date.now()}`
+    const id = uniqueId()
+    const testUsername = `test-${id}`
     const testPassword = 'test-password-123'
-    const testPath = `/playwright-test-${Date.now()}`
+    const testPath = `/playwright-test-${id}`
     const editPath = `${testPath}/edit`
 
     // Signup and login using the unique document path
@@ -59,7 +61,7 @@ test.describe('Editor', () => {
 
   test('should allow editing document slug', async ({page}) => {
     const slugInput = page.locator('#slug')
-    const newSlug = `/playwright-slug-${Date.now()}`
+    const newSlug = `/playwright-slug-${uniqueId()}`
 
     await slugInput.fill(newSlug)
     await expect(slugInput).toHaveValue(newSlug)
@@ -137,7 +139,7 @@ test.describe('Editor', () => {
 
   test('should toggle publish status', async ({page}) => {
     // Use a unique document path with playwright prefix for this test
-    const testPath = `/playwright-publish-${Date.now()}`
+    const testPath = `/playwright-publish-${uniqueId()}`
     const editPath = `${testPath}/edit`
 
     // Ensure the document doesn't exist (delete if it does)
@@ -294,8 +296,9 @@ test.describe('Editor', () => {
 
   test('should add old path to redirects table when document path is updated', async ({page}) => {
     // Use a unique document path with playwright prefix for this test
-    const oldPath = `/playwright-redirect-test-${Date.now()}`
-    const newPath = `/playwright-redirect-test-new-${Date.now()}`
+    const redirectId = uniqueId()
+    const oldPath = `/playwright-redirect-test-${redirectId}`
+    const newPath = `/playwright-redirect-test-new-${redirectId}`
     const oldEditPath = `${oldPath}/edit`
 
     // Ensure the document doesn't exist (delete if it does)
@@ -373,7 +376,7 @@ test.describe('Editor', () => {
 
   test('should upload file via file input', async ({page}) => {
     // Use a unique document path
-    const testPath = `/playwright-upload-${Date.now()}`
+    const testPath = `/playwright-upload-${uniqueId()}`
     const editPath = `${testPath}/edit`
 
     // Navigate to the document editor
@@ -427,7 +430,7 @@ test.describe('Editor', () => {
 
   test('should delete document via settings page delete button', async ({page}) => {
     // Use a unique document path for this test
-    const testPath = `/playwright-delete-test-${Date.now()}`
+    const testPath = `/playwright-delete-test-${uniqueId()}`
     const editPath = `${testPath}/edit`
 
     // Navigate to the document editor
@@ -504,7 +507,7 @@ test.describe('Editor', () => {
 
   test('should revert changes back to last saved state', async ({page}) => {
     // Use a unique document path for this test
-    const testPath = `/playwright-revert-test-${Date.now()}`
+    const testPath = `/playwright-revert-test-${uniqueId()}`
     const editPath = `${testPath}/edit`
 
     // Navigate to the document editor

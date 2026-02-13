@@ -1,6 +1,7 @@
 import {test, expect} from '@playwright/test'
 import {login, signup} from './helpers/auth.js'
 import {waitForEditorReady, switchToTab} from './helpers/editor.js'
+import {uniqueId} from './helpers/unique-id.js'
 
 test.describe('Authentication', () => {
   test('should render login when accessing /edit without authentication', async ({page}) => {
@@ -15,7 +16,7 @@ test.describe('Authentication', () => {
   })
 
   test('should allow login with valid credentials', async ({page}) => {
-    const testUsername = `test-${Date.now()}`
+    const testUsername = `test-${uniqueId()}`
     const testPassword = 'test-password-123'
 
     // First signup
@@ -55,7 +56,7 @@ test.describe('Authentication', () => {
   })
 
   test('should allow signup if enabled', async ({page}) => {
-    const testUsername = `test-signup-${Date.now()}`
+    const testUsername = `test-signup-${uniqueId()}`
     const testPassword = 'test-password-123'
 
     await signup(page, testUsername, testPassword, testPassword, '/edit')
@@ -67,7 +68,7 @@ test.describe('Authentication', () => {
   })
 
   test('should maintain session across page reloads', async ({page}) => {
-    const testUsername = `test-${Date.now()}`
+    const testUsername = `test-${uniqueId()}`
     const testPassword = 'test-password-123'
 
     // Signup and login
@@ -84,7 +85,7 @@ test.describe('Authentication', () => {
   })
 
   test('should allow logout', async ({page}) => {
-    const testUsername = `test-${Date.now()}`
+    const testUsername = `test-${uniqueId()}`
     const testPassword = 'test-password-123'
 
     // Signup and login

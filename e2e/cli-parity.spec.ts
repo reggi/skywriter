@@ -3,6 +3,7 @@ import {promises as fs} from 'node:fs'
 import {join, basename} from 'node:path'
 import {waitForEditorReady, switchToTab, clickSave, setEditorContent, getEditorContent} from './helpers/editor.js'
 import {signup} from './helpers/auth.js'
+import {uniqueId} from './helpers/unique-id.js'
 import {execCli, setupCliConfig, compareDirectories, createTempDir, type CliConfigSetup} from './helpers/cli.js'
 
 /**
@@ -29,9 +30,9 @@ test.describe('CLI Parity: Tar vs Git transport', () => {
     tempDirGit = await createTempDir('git')
 
     // Create a test user for this test at a specific document path
-    testUsername = `parity-test-${Date.now()}`
+    testUsername = `parity-test-${uniqueId()}`
     testPassword = 'test-password-123'
-    testPath = `/playwright-parity-${Date.now()}`
+    testPath = `/playwright-parity-${uniqueId()}`
     editPath = `${testPath}/edit`
 
     await signup(page, testUsername, testPassword, testPassword, editPath)
@@ -502,7 +503,7 @@ test.describe('CLI Parity: Push with slot and template', () => {
     tempDirGit = await createTempDir('git-push')
 
     // Create unique paths for this test
-    const timestamp = Date.now()
+    const timestamp = uniqueId()
     testUsername = `nested-push-${timestamp}`
     testPassword = 'test-password-123'
     mainPath = `/playwright-push-main-${timestamp}`
@@ -996,9 +997,9 @@ test.describe('CLI Parity: Upload operations', () => {
     tempDir = await createTempDir('upload')
 
     // Create a test user for this test at a specific document path
-    testUsername = `upload-parity-${Date.now()}`
+    testUsername = `upload-parity-${uniqueId()}`
     testPassword = 'test-password-123'
-    testPath = `/playwright-upload-${Date.now()}`
+    testPath = `/playwright-upload-${uniqueId()}`
     editPath = `${testPath}/edit`
 
     await signup(page, testUsername, testPassword, testPassword, editPath)

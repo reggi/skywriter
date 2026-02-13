@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os'
 import {randomBytes} from 'node:crypto'
 import {waitForEditorReady, switchToTab, clickSave, setEditorContent} from './helpers/editor.js'
 import {signup} from './helpers/auth.js'
+import {uniqueId} from './helpers/unique-id.js'
 
 /**
  * Execute a git command in a directory
@@ -50,9 +51,9 @@ test.describe('Git Integration', () => {
     await fs.mkdir(testDir, {recursive: true})
 
     // Create a test user for this test at a specific document path
-    testUsername = `git-test-${Date.now()}`
+    testUsername = `git-test-${uniqueId()}`
     testPassword = 'test-password-123'
-    testPath = `/playwright-git-test-${Date.now()}`
+    testPath = `/playwright-git-test-${uniqueId()}`
     editPath = `${testPath}/edit`
 
     await signup(page, testUsername, testPassword, testPassword, editPath)

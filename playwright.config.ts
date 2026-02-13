@@ -14,16 +14,14 @@ export default defineConfig({
   /* Global setup/teardown to clean up test users */
   globalSetup: './e2e/global-setup.ts',
   globalTeardown: './e2e/global-teardown.ts',
-  /* Run tests sequentially (one at a time) for easier debugging */
-  fullyParallel: false,
+  /* Run tests in parallel */
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Run one test at a time */
-  workers: 1,
-  /* Stop on first failure */
-  maxFailures: 1,
+  /* Use default workers (half of CPU cores) */
+  workers: undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['list'], ['html']], // Show progress in terminal + HTML report
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
