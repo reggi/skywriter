@@ -8,7 +8,7 @@ describe('log middleware', () => {
   it('should log authenticated request', async () => {
     const app = new Hono<AppContext>()
     const logs: string[] = []
-    
+
     // Mock console.log
     const originalLog = console.log
     console.log = mock.fn((...args: unknown[]) => {
@@ -41,7 +41,7 @@ describe('log middleware', () => {
   it('should log unauthenticated request', async () => {
     const app = new Hono<AppContext>()
     const logs: string[] = []
-    
+
     // Mock console.log
     const originalLog = console.log
     console.log = mock.fn((...args: unknown[]) => {
@@ -73,7 +73,7 @@ describe('log middleware', () => {
   it('should log request without authentication context as unauthenticated', async () => {
     const app = new Hono<AppContext>()
     const logs: string[] = []
-    
+
     // Mock console.log
     const originalLog = console.log
     console.log = mock.fn((...args: unknown[]) => {
@@ -99,7 +99,7 @@ describe('log middleware', () => {
 
   it('should return response after logging', async () => {
     const app = new Hono<AppContext>()
-    
+
     // Mock console.log to suppress output
     const originalLog = console.log
     console.log = mock.fn()
@@ -120,7 +120,7 @@ describe('log middleware', () => {
   it('should log different HTTP methods correctly', async () => {
     const app = new Hono<AppContext>()
     const logs: string[] = []
-    
+
     // Mock console.log
     const originalLog = console.log
     console.log = mock.fn((...args: unknown[]) => {

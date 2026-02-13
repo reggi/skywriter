@@ -1,13 +1,21 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
 import {Hono} from 'hono'
+import type {MiddlewareHandler} from 'hono'
 import {establishAuth} from '../../../src/server/middleware/establishAuth.ts'
-import {withDb} from '../../../src/server/middleware/withDb.ts'
 import {signup} from '../../../src/operations/signup.ts'
 import {createSession} from '../../../src/operations/createSession.ts'
 import {createDatabaseContext, closeDatabaseContext, closePool} from '../../../src/db/index.ts'
 import type {AppContext} from '../../../src/server/utils/types.ts'
 import type {PoolClient} from 'pg'
+
+/** Sets the client on context directly, bypassing Pool.connect() */
+function withClient(client: PoolClient): MiddlewareHandler<AppContext> {
+  return async (c, next) => {
+    c.set('client', client)
+    await next()
+  }
+}
 
 describe('establishAuth', () => {
   let ctx: PoolClient
@@ -49,18 +57,18 @@ describe('establishAuth', () => {
 
   it('should authenticate with valid session cookie', async () => {
     const app = new Hono<AppContext>()
-    
+
     // Create test user and session
     const user = await signup(ctx, {
       username: `session-user-${testId}`,
       password: 'password123',
     })
     createdUserIds.push(user.id)
-    
+
     const session = await createSession(ctx, {user_id: user.id})
     createdSessionIds.push(session.session_id)
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -77,7 +85,7 @@ describe('establishAuth', () => {
     })
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, true)
     assert.strictEqual(body.userId, user.id)
     assert.strictEqual(body.username, user.username)
@@ -86,7 +94,7 @@ describe('establishAuth', () => {
   it('should not authenticate with invalid session cookie', async () => {
     const app = new Hono<AppContext>()
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -101,13 +109,13 @@ describe('establishAuth', () => {
     })
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, false)
   })
 
   it('should authenticate with valid Basic Auth header', async () => {
     const app = new Hono<AppContext>()
-    
+
     // Create test user
     const user = await signup(ctx, {
       username: `basicauth-user-${testId}`,
@@ -115,7 +123,7 @@ describe('establishAuth', () => {
     })
     createdUserIds.push(user.id)
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -133,7 +141,7 @@ describe('establishAuth', () => {
     })
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, true)
     assert.strictEqual(body.userId, user.id)
     assert.strictEqual(body.username, user.username)
@@ -142,7 +150,7 @@ describe('establishAuth', () => {
   it('should not authenticate with invalid Basic Auth credentials', async () => {
     const app = new Hono<AppContext>()
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -158,14 +166,14 @@ describe('establishAuth', () => {
     })
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, false)
   })
 
   it('should not authenticate without credentials', async () => {
     const app = new Hono<AppContext>()
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -176,30 +184,30 @@ describe('establishAuth', () => {
     const res = await app.request('/test')
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, false)
   })
 
   it('should prefer session cookie over Basic Auth', async () => {
     const app = new Hono<AppContext>()
-    
+
     // Create two test users
     const sessionUser = await signup(ctx, {
       username: `session-priority-user-${testId}`,
       password: 'sessionpass',
     })
     createdUserIds.push(sessionUser.id)
-    
+
     const basicUser = await signup(ctx, {
       username: `basic-priority-user-${testId}`,
       password: 'basicpass',
     })
     createdUserIds.push(basicUser.id)
-    
+
     const session = await createSession(ctx, {user_id: sessionUser.id})
     createdSessionIds.push(session.session_id)
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -218,7 +226,7 @@ describe('establishAuth', () => {
     })
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, true)
     // Should use session user, not basic auth user
     assert.strictEqual(body.userId, sessionUser.id)
@@ -228,7 +236,7 @@ describe('establishAuth', () => {
   it('should handle malformed Basic Auth header gracefully', async () => {
     const app = new Hono<AppContext>()
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -243,29 +251,29 @@ describe('establishAuth', () => {
     })
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, false)
   })
 
   it('should handle expired session', async () => {
     const app = new Hono<AppContext>()
-    
+
     // Create test user and session
     const user = await signup(ctx, {
       username: `expired-user-${testId}`,
       password: 'password123',
     })
     createdUserIds.push(user.id)
-    
+
     const session = await createSession(ctx, {user_id: user.id})
     createdSessionIds.push(session.session_id)
-    
+
     // Expire the session
     await ctx.query("UPDATE sessions SET expires_at = NOW() - INTERVAL '1 day' WHERE session_id = $1", [
       session.session_id,
     ])
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.get('/*', c => {
       return c.json({
@@ -280,7 +288,7 @@ describe('establishAuth', () => {
     })
 
     assert.strictEqual(res.status, 200)
-    const body = await res.json()
+    const body = (await res.json()) as Record<string, unknown>
     assert.strictEqual(body.isAuthenticated, false)
   })
 
@@ -288,7 +296,7 @@ describe('establishAuth', () => {
     const app = new Hono<AppContext>()
     let nextCalled = false
 
-    app.use('/*', withDb(ctx))
+    app.use('/*', withClient(ctx))
     app.use('/*', establishAuth())
     app.use('/*', async (c, next) => {
       nextCalled = true
