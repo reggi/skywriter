@@ -1,5 +1,5 @@
 import {serve as honoServe} from '@hono/node-server'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../db/index.ts'
+import {getPool, closePool} from '../../db/index.ts'
 import {createApp} from '../../server/index.ts'
 import {runner} from 'node-pg-migrate'
 import type {Server} from 'node:http'
@@ -24,8 +24,8 @@ export const host: CliCommand<[number, boolean?, boolean?]> = async (_ctx, port,
     log.info('Migrations complete.')
   }
 
-  const client = await createDatabaseContext(connectionString)
-  const app = await createApp(client, {seed})
+  const pool = getPool(connectionString)
+  const app = await createApp(pool, {seed})
 
   log.info(`🚀 Server is running on http://localhost:${port}/`)
 
@@ -40,7 +40,6 @@ export const host: CliCommand<[number, boolean?, boolean?]> = async (_ctx, port,
 
   async function shutdown(signal: string) {
     log.info(`\nReceived ${signal}, shutting down...`)
-    await closeDatabaseContext(client)
     await closePool()
     process.exit(0)
   }

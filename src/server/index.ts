@@ -1,5 +1,5 @@
 import {Hono} from 'hono'
-import type {PoolClient} from 'pg'
+import type {Pool} from 'pg'
 import {isAbsolute, resolve} from 'node:path'
 import {mkdirSync} from 'node:fs'
 import {
@@ -36,8 +36,15 @@ import {log} from './middleware/log.ts'
 import {requirePathMatch} from './middleware/requirePathMatch.ts'
 import {seedIfEmpty} from '../operations/seedIfEmpty.ts'
 
-export async function createApp(client: PoolClient, options?: {seed?: boolean}) {
-  if (options?.seed !== false) await seedIfEmpty(client)
+export async function createApp(pool: Pool, options?: {seed?: boolean}) {
+  if (options?.seed !== false) {
+    const client = await pool.connect()
+    try {
+      await seedIfEmpty(client)
+    } finally {
+      client.release()
+    }
+  }
 
   const uploadsRaw = process.env.UPLOADS_PATH || 'uploads'
   const uploadsPath = isAbsolute(uploadsRaw) ? uploadsRaw : resolve(process.cwd(), uploadsRaw)
@@ -55,7 +62,7 @@ export async function createApp(client: PoolClient, options?: {seed?: boolean}) 
     await next()
   })
 
-  app.use('/*', withDb(client), establishAuth(), log())
+  app.use('/*', withDb(pool), establishAuth(), log())
 
   app.all('/*', requirePathMatch(/^(.*)\.git(\/.*)?$/, authorize('Git Access'), git))
 
