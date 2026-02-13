@@ -169,7 +169,7 @@ describe('functionContextClient', () => {
   })
 
   describe('error handling', () => {
-    it('should throw error when response is not ok', async () => {
+    it('should throw error when response status is unsuccessful', async () => {
       const originalFetch = globalThis.fetch
       globalThis.fetch = async () => {
         return {
