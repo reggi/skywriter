@@ -2,7 +2,7 @@ import {describe, it, before, after, beforeEach} from 'node:test'
 import assert from 'node:assert/strict'
 import {Readable} from 'node:stream'
 import {updateViaArchive} from '../../src/operations/updateViaArchive.ts'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import type {DocumentId} from '../../src/operations/types.ts'
 import {removeDocument} from '../../src/operations/removeDocument.ts'
 import {getDualDocument} from '../../src/operations/getDualDocument.ts'
@@ -16,16 +16,16 @@ const MAX_TOTAL_SIZE = MAX_FILE_SIZE * MAX_ARCHIVE_FILES // 60 MB total
 
 describe('push operation', () => {
   let client: PoolClient
+  let cleanup: () => Promise<void>
 
   before(async () => {
-    const connectionString =
-      process.env.DATABASE_URL || 'postgresql://astrodoc:astrodoc_password@localhost:5455/astrodoc'
-    client = await createDatabaseContext(connectionString)
+    const tc = await createTestContext()
+    client = tc.client
+    cleanup = tc.cleanup
   })
 
   after(async () => {
-    await closeDatabaseContext(client)
-    await closePool()
+    await cleanup()
   })
 
   // Clean up test documents before each test

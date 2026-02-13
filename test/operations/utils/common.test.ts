@@ -1,6 +1,6 @@
 import {describe, it, before, after} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../../src/db/index.ts'
+import {createTestContext} from '../../helpers/db.ts'
 import {normalizeDocumentQuery} from '../../../src/operations/utils/common.ts'
 import {findDocument} from '../../../src/operations/findDocument.ts'
 import type {PoolClient} from 'pg'
@@ -8,14 +8,16 @@ import type {DocumentId, DocumentQuery} from '../../../src/operations/types.ts'
 
 describe('common helpers', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
   })
 
   describe('normalizeDocumentQuery', () => {

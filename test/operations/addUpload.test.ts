@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import {mkdtemp, rm, readFile, readdir} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {addUpload} from '../../src/operations/addUpload.ts'
 import {getUploads} from '../../src/operations/getUploads.ts'
@@ -12,12 +12,15 @@ import type {DocumentId} from '../../src/operations/types.ts'
 
 describe('addUpload operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   let uploadsPath: string
   const createdDocumentIds: number[] = []
   const testId = Date.now()
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
     uploadsPath = await mkdtemp(join(tmpdir(), 'skywriter-test-uploads-'))
   })
 
@@ -42,8 +45,7 @@ describe('addUpload operation', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
     // Clean up temp directory
     await rm(uploadsPath, {recursive: true, force: true})
   })

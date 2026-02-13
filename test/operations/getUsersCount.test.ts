@@ -1,19 +1,21 @@
 import {describe, it, before, after} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {getUsersCount} from '../../src/operations/getUsersCount.ts'
 import type {PoolClient} from 'pg'
 
 describe('getUsersCount operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
   })
 
   it('should return the count of users', async () => {

@@ -1,6 +1,6 @@
 import {describe, it, before, after, afterEach} from 'node:test'
 import assert from 'node:assert'
-import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
+import {createTestContext} from '../helpers/db.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {createTestUpload, cleanupTestUploads, getTestUploadsPath} from '../helpers/uploads.ts'
 import {removeUpload} from '../../src/operations/removeUpload.ts'
@@ -20,12 +20,15 @@ async function pathExists(path: string): Promise<boolean> {
 
 describe('removeUpload operation', () => {
   let ctx: PoolClient
+  let cleanup: () => Promise<void>
   const createdDocumentIds: number[] = []
   const testId = Date.now()
   let uploadsPath: string
 
   before(async () => {
-    ctx = await createDatabaseContext()
+    const tc = await createTestContext()
+    ctx = tc.client
+    cleanup = tc.cleanup
     uploadsPath = await getTestUploadsPath()
   })
 
@@ -50,8 +53,7 @@ describe('removeUpload operation', () => {
   })
 
   after(async () => {
-    await closeDatabaseContext(ctx)
-    await closePool()
+    await cleanup()
     await cleanupTestUploads()
   })
 
