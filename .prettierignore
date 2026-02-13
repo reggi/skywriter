@@ -6,3 +6,5 @@ build
 migrations
 cache
 **/cache/**
+CHANGELOG.md
+release-please-config.json
