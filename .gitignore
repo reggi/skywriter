@@ -1,36 +1,50 @@
-# Dependencies
-node_modules/
+# Ignore everything by default
+*
 
-# Environment variables
-.env
+# Allow dotfiles and config
+!.gitignore
+!.env.example
+!.eslintrc
+!.github/
+!.github/**
+!.nvmrc
+!.pgmigrate.json
+!.prettierignore
+!.railwayignore
+!.release-please-manifest.json
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Allow top-level config files
+!LICENSE
+!README.md
+!RAILWAY_DEPLOYMENT.md
+!docker-compose.yml
+!eslint.config.js
+!nixpacks.toml
+!package.json
+!package-lock.json
+!playwright.config.ts
+!railway.json
+!release-please-config.json
+!tsconfig.json
+!tsconfig.build.json
 
-# OS files
+# Allow source directories
+!src/
+!src/**
+!test/
+!test/**
+!e2e/
+!e2e/**
+!scripts/
+!scripts/**
+!migrations/
+!migrations/**
+!pages/
+!pages/**
+
+# Always ignore OS / editor junk
 .DS_Store
 Thumbs.db
-
-# Editor directories and files
-.idea/
-.vscode/
 *.swp
 *.swo
 *~
-
-coverage
-
-# Playwright
-test-results/
-playwright-report/
-playwright/.cache/
-
-# Build output
-dist/
-
-# Git repositories for documents
-.git-repos/
-uploads
