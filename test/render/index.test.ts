@@ -2856,3 +2856,52 @@ test('render() with template: both style and script are injected', async () => {
   const headIdx = result.html.indexOf('<head>')
   assert.ok(styleIdx > headIdx, 'Style should be inside head')
 })
+
+// Extension .xml should not inject base, style, or script
+test('render() with .xml extension: no base, style, or script injected', async () => {
+  const doc = makeDoc({
+    content: '<?xml version="1.0"?><rss><channel><title>Test</title></channel></rss>',
+    extension: '.xml',
+    mime_type: 'application/rss+xml',
+    style: '/* Custom styles */',
+    script: '// Client JS',
+  })
+  const result = await renderDoc(doc)
+  assert.ok(!result.html.includes('<base'), 'No base tag should be injected for .xml')
+  assert.ok(!result.html.includes('<style>'), 'No style tag should be injected for .xml')
+  assert.ok(!result.html.includes('<script>'), 'No script tag should be injected for .xml')
+  assert.ok(result.html.includes('<?xml version="1.0"?>'), 'XML content should be preserved')
+})
+
+test('render() with .xml extension and template: no base, style, or script injected', async () => {
+  const doc = makeDoc({
+    content: '<?xml version="1.0"?><rss><channel><title>Test</title></channel></rss>',
+    extension: '.xml',
+    mime_type: 'application/rss+xml',
+    style: '/* Custom styles */',
+    script: '// Client JS',
+    template: makeDoc({
+      content: '<%= slot.html %>',
+      style: '.template { margin: 0; }',
+      script: 'console.log("template")',
+    }),
+  })
+  const result = await renderDoc(doc)
+  assert.ok(!result.html.includes('<base'), 'No base tag should be injected for .xml with template')
+  assert.ok(!result.html.includes('<style>'), 'No style tag should be injected for .xml with template')
+  assert.ok(!result.html.includes('<script>'), 'No script tag should be injected for .xml with template')
+})
+
+// Extension .html should inject base, style, and script
+test('render() with .html extension: base, style, and script are injected', async () => {
+  const doc = makeDoc({
+    content: '<p>Hello</p>',
+    extension: '.html',
+    style: 'body { margin: 0; }',
+    script: 'console.log("hello")',
+  })
+  const result = await renderDoc(doc)
+  assert.ok(result.html.includes('<base'), 'Base tag should be injected for .html')
+  assert.ok(result.html.includes('<style>body { margin: 0; }</style>'), 'Style should be injected for .html')
+  assert.ok(result.html.includes('<script>console.log("hello")</script>'), 'Script should be injected for .html')
+})

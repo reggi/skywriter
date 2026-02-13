@@ -13,6 +13,7 @@ interface LocalFiles {
   template_path?: string | null
   slot_path?: string | null
   mime_type?: string
+  extension?: string
 }
 
 /**
@@ -68,6 +69,7 @@ async function readLocalFiles(dir: string = '.'): Promise<LocalFiles> {
     result.template_path = settings.template_path
     result.slot_path = settings.slot_path
     result.mime_type = settings.mime_type
+    result.extension = settings.extension
   } catch {}
 
   return result
@@ -166,8 +168,10 @@ export async function assemble(
   const mimeType = files.mime_type || 'text/html; charset=UTF-8'
 
   // Normalize extension: .md, .html, and .eta all become .html since they render to HTML
+  // Settings extension takes priority when explicitly set
   const actualExtension = extname(contentFile).toLowerCase()
-  const extension = ['.md', '.html', '.eta'].includes(actualExtension) ? '.html' : actualExtension
+  const derivedExtension = ['.md', '.html', '.eta'].includes(actualExtension) ? '.html' : actualExtension
+  const extension = files.extension || derivedExtension
 
   // Create a minimal RenderDocument structure
   const now = new Date()
