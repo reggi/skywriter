@@ -24,7 +24,7 @@ export interface CliConfigSetup {
   homeDir: string
   /** Environment variables to pass to CLI commands */
   env: Record<string, string>
-  /** Global args to prepend to all CLI commands (e.g., ['--auth-type=file']) */
+  /** Global args to prepend to all CLI commands (e.g., ['--silent']) */
   globalArgs: string[]
   /** Cleanup function to remove temp config */
   cleanup: () => Promise<void>
@@ -92,10 +92,9 @@ export async function setupCliConfig(serverUrl: string, username: string, passwo
   await fs.mkdir(homeDir, {recursive: true})
 
   // The CLI uses cliId 'skywriter' to construct file paths:
-  // ~/.skywriter.json - server list with default
-  // ~/.skywriter-cli-credentials.json - file-based credentials (fallback)
+  // ~/.skywriter.json - server config with credentials (when using file-based storage)
 
-  // Create server list file (format: {active: "https://user@host", servers: {"https://user@host": {}}})
+  // Create config file with server entry and password (file-based credential storage)
   const serverListPath = join(homeDir, '.skywriter.json')
   const urlObj = new URL(serverUrl)
   urlObj.username = username
@@ -103,19 +102,10 @@ export async function setupCliConfig(serverUrl: string, username: string, passwo
   const serverConfig = {
     active: serverKey,
     servers: {
-      [serverKey]: {},
+      [serverKey]: {password},
     },
   }
   await fs.writeFile(serverListPath, JSON.stringify(serverConfig, null, 2))
-
-  // Create credentials file (file-based credential storage format)
-  // The key is `${serverUrl}:${username}`
-  const credentialsPath = join(homeDir, '.skywriter-cli-credentials.json')
-  const credentialsKey = `${serverUrl}:${username}`
-  const credentials: Record<string, {serverUrl: string; username: string; password: string}> = {
-    [credentialsKey]: {serverUrl, username, password},
-  }
-  await fs.writeFile(credentialsPath, JSON.stringify(credentials, null, 2))
 
   // Create .gitconfig to disable credential helpers (prevents macOS keychain prompts)
   const gitconfigPath = join(homeDir, '.gitconfig')
@@ -134,8 +124,8 @@ export async function setupCliConfig(serverUrl: string, username: string, passwo
       // Disable git credential helpers
       GIT_TERMINAL_PROMPT: '0',
     },
-    // Use file-based credential storage (skip keychain) and suppress proc-log output
-    globalArgs: ['--auth-type=file', '--silent'],
+    // Suppress proc-log output
+    globalArgs: ['--silent'],
     cleanup: async () => {
       await fs.rm(homeDir, {recursive: true, force: true})
     },

@@ -204,14 +204,14 @@ export const init: CliCommand<[InitOptions?]> = async (ctx, options = {}) => {
       const templateDir = join(cwd, 'template')
       await fs.mkdir(templateDir, {recursive: true})
       await initDirectory(templateDir, {...initOptions, path: templatePath}, fs, {skipEmptyCheck: true})
-      await fs.updateSettingsFile(join(cwd, 'settings.json'), 'template_path', templatePath)
+      await fs.updateJsonProperty(join(cwd, 'settings.json'), ['template_path'], templatePath)
     }
 
     if (slot && slotPath) {
       const slotDir = join(cwd, 'slot')
       await fs.mkdir(slotDir, {recursive: true})
       await initDirectory(slotDir, {...initOptions, path: slotPath}, fs, {skipEmptyCheck: true})
-      await fs.updateSettingsFile(join(cwd, 'settings.json'), 'slot_path', slotPath)
+      await fs.updateJsonProperty(join(cwd, 'settings.json'), ['slot_path'], slotPath)
     }
 
     return
@@ -236,14 +236,14 @@ export const init: CliCommand<[InitOptions?]> = async (ctx, options = {}) => {
       const templateDir = join(cwd, 'template')
       await fs.mkdir(templateDir, {recursive: true})
       await initDirectory(templateDir, {...initOptions, path: templatePath}, fs, {skipEmptyCheck: true})
-      await fs.updateSettingsFile(join(cwd, 'settings.json'), 'template_path', templatePath)
+      await fs.updateJsonProperty(join(cwd, 'settings.json'), ['template_path'], templatePath)
     }
 
     if (slot && slotPath) {
       const slotDir = join(cwd, 'slot')
       await fs.mkdir(slotDir, {recursive: true})
       await initDirectory(slotDir, {...initOptions, path: slotPath}, fs, {skipEmptyCheck: true})
-      await fs.updateSettingsFile(join(cwd, 'settings.json'), 'slot_path', slotPath)
+      await fs.updateJsonProperty(join(cwd, 'settings.json'), ['slot_path'], slotPath)
     }
   }
 }

@@ -5,11 +5,13 @@ import {stripAnsi} from '../../helpers/stripAnsi.ts'
 // Mock data
 let mockServers: Array<{serverUrl: string; username: string; active: boolean}> = []
 
-// Mock credentials module
-mock.module('../../../src/cli/utils/credentials.ts', {
+// Mock config module
+mock.module('../../../src/cli/utils/config.ts', {
   namedExports: {
-    listServers: async () => mockServers,
-    getCredentialBackendName: () => 'Test Backend',
+    readServerConfig: async () => ({
+      listServers: () => mockServers,
+      getCredentialBackendName: () => 'Test Backend',
+    }),
   },
 })
 

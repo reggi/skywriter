@@ -1,5 +1,5 @@
 import {select, confirm} from '@inquirer/prompts'
-import {listServers, deleteCredentials} from '../utils/credentials.ts'
+import {readServerConfig} from '../utils/config.ts'
 import type {CliCommand, ServerInfo} from '../utils/types.ts'
 import {createPrefixLog} from '../utils/prefixLog.ts'
 
@@ -11,7 +11,8 @@ import {createPrefixLog} from '../utils/prefixLog.ts'
  */
 export const removeServer: CliCommand<[string?]> = async (ctx, url?) => {
   const log = createPrefixLog(ctx.cliName, 'remote remove')
-  const servers = await listServers(ctx, log)
+  const config = await readServerConfig(ctx, log)
+  const servers = config.listServers()
 
   if (servers.length === 0) {
     throw new Error(`No servers configured. Run "${ctx.cliName} login" to add one.`)
@@ -24,7 +25,7 @@ export const removeServer: CliCommand<[string?]> = async (ctx, url?) => {
     })
 
     if (confirmed) {
-      await deleteCredentials(ctx, log, server.serverUrl, server.username)
+      await config.deleteCredentials(server.serverUrl, server.username)
       log.info(`removed server: ${server.serverUrl} (${server.username})`)
     }
   }

@@ -1,5 +1,5 @@
 import {select} from '@inquirer/prompts'
-import {listServers, setDefaultServer} from '../utils/credentials.ts'
+import {readServerConfig} from '../utils/config.ts'
 import type {CliCommand} from '../utils/types.ts'
 import {createPrefixLog} from '../utils/prefixLog.ts'
 
@@ -11,7 +11,8 @@ import {createPrefixLog} from '../utils/prefixLog.ts'
  */
 export const switchServer: CliCommand<[string?]> = async (ctx, url?) => {
   const cmdLog = createPrefixLog(ctx.cliName, 'remote switch')
-  const servers = await listServers(ctx, cmdLog)
+  const serverConfig = await readServerConfig(ctx, cmdLog)
+  const servers = serverConfig.listServers()
 
   if (servers.length === 0) {
     throw new Error(`No servers configured. Run "${ctx.cliName} login" to add one.`)
@@ -32,7 +33,7 @@ export const switchServer: CliCommand<[string?]> = async (ctx, url?) => {
       cmdLog.info(`${username}@${parsed.host} is already the active server.`)
       return
     }
-    await setDefaultServer(ctx, cmdLog, server.serverUrl, server.username)
+    await serverConfig.setDefaultServer(server.serverUrl, server.username)
     return
   }
 
@@ -56,5 +57,5 @@ export const switchServer: CliCommand<[string?]> = async (ctx, url?) => {
     return
   }
 
-  await setDefaultServer(ctx, cmdLog, selected.serverUrl, selected.username)
+  await serverConfig.setDefaultServer(selected.serverUrl, selected.username)
 }

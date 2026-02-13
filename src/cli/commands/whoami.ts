@@ -1,4 +1,4 @@
-import {listServers, retrieveCredentials} from '../utils/credentials.ts'
+import {readServerConfig} from '../utils/config.ts'
 import type {CliCommand} from '../utils/types.ts'
 import {createPrefixLog} from '../utils/prefixLog.ts'
 import {createLoggedFetch} from '../utils/loggedFetch.ts'
@@ -11,7 +11,8 @@ export const whoami: CliCommand = async ctx => {
   const json = ctx.json
   const cmdLog = createPrefixLog(ctx.cliName, 'whoami')
   const fetch = createLoggedFetch(cmdLog)
-  const servers = await listServers(ctx, cmdLog)
+  const config = await readServerConfig(ctx, cmdLog)
+  const servers = config.listServers()
 
   if (servers.length === 0) {
     const message = `Not logged in. Run "${ctx.cliName} login" to authenticate.`
@@ -34,7 +35,7 @@ export const whoami: CliCommand = async ctx => {
     throw new Error(message)
   }
 
-  const defaultServer = await retrieveCredentials(ctx, cmdLog, active.serverUrl, active.username)
+  const defaultServer = await config.retrieveCredentials(active.serverUrl, active.username)
   if (!defaultServer) {
     const message = `Credentials expired for ${active.username}@${new URL(active.serverUrl).host}. Run "${ctx.cliName} login" to re-authenticate.`
     if (json) {

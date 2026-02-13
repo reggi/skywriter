@@ -57,15 +57,46 @@ mock.module('node:os', {
 })
 
 // Import after mocking
-const {
-  storeCredentials,
-  retrieveCredentials,
-  deleteCredentials,
-  listServers,
-  getDefaultServer,
-  setDefaultServer,
-  getCredentialBackendName,
-} = await import('../../../src/cli/utils/credentials.ts')
+const {getCredentialBackendName} = await import('../../../src/cli/utils/credentials.ts')
+const {readServerConfig} = await import('../../../src/cli/utils/config.ts')
+
+// Helper: read config and call methods
+async function storeCredentials(
+  ctx: CliContext,
+  log: PrefixLog,
+  serverUrl: string,
+  username: string,
+  password: string,
+  setAsDefault = true,
+) {
+  const config = await readServerConfig(ctx, log)
+  await config.storeCredentials(serverUrl, username, password, {setAsDefault})
+}
+
+async function retrieveCredentials(ctx: CliContext, log: PrefixLog, serverUrl: string, username: string) {
+  const config = await readServerConfig(ctx, log)
+  return config.retrieveCredentials(serverUrl, username)
+}
+
+async function deleteCredentials(ctx: CliContext, log: PrefixLog, serverUrl: string, username: string) {
+  const config = await readServerConfig(ctx, log)
+  await config.deleteCredentials(serverUrl, username)
+}
+
+async function listServers(ctx: CliContext, log: PrefixLog) {
+  const config = await readServerConfig(ctx, log)
+  return config.listServers()
+}
+
+async function getDefaultServer(ctx: CliContext, log: PrefixLog) {
+  const config = await readServerConfig(ctx, log)
+  return config.getDefaultServer()
+}
+
+async function setDefaultServer(ctx: CliContext, log: PrefixLog, serverUrl: string, username: string) {
+  const config = await readServerConfig(ctx, log)
+  await config.setDefaultServer(serverUrl, username)
+}
 
 // Capture proc-log output
 let consoleOutput: string[] = []

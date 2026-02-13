@@ -29,7 +29,6 @@ function createProgram(): Command {
     .name(getCliName())
     .description('Open source html host and tool for syncing webpages to that host.')
     .version('1.0.0')
-    .option('--auth-type <type>', 'Override credential storage to use file-based storage (only "file" is allowed)')
     .option('-s, --silent', 'Suppress all output')
     .option('--json', 'Output as JSON (for commands that support it)')
     .option('--log-level <level>', 'Set log level (error, warn, notice, http, info, verbose, silly)', 'info')
@@ -72,16 +71,11 @@ function createProgram(): Command {
 
   // Create context getter that includes parsed global options
   const getCtx = (): CliContext => {
-    const opts = program.opts<{authType?: string; silent?: boolean; json?: boolean}>()
-    const authType = opts.authType === 'file' ? 'file' : undefined
-    if (opts.authType && opts.authType !== 'file') {
-      throw new Error(`Invalid --auth-type value: "${opts.authType}". Only "file" is allowed.`)
-    }
+    const opts = program.opts<{silent?: boolean; json?: boolean}>()
     return {
       cliName: getCliName(),
       cliId: getCliId(),
       cwd: process.cwd(),
-      authType,
       silent: opts.silent,
       json: opts.json,
     }
@@ -137,8 +131,13 @@ function createProgram(): Command {
       .argument('[url]', 'Server URL with username (e.g. http://user@host.com)')
       .option('-y, --yes', 'Set as default server without prompting')
       .option('--use-env', 'Read credentials from SKYWRITER_SECRET env var')
-      .action(async (url?: string, opts?: {yes?: boolean; useEnv?: boolean}) => {
-        await login(getCtx(), {url, yes: opts?.yes, useEnv: opts?.useEnv})
+      .option('--auth-store <store>', 'Credential storage backend ("file" to store in config)')
+      .action(async (url?: string, opts?: {yes?: boolean; useEnv?: boolean; authStore?: string}) => {
+        const authStore = opts?.authStore === 'file' ? 'file' : undefined
+        if (opts?.authStore && opts.authStore !== 'file') {
+          throw new Error(`Invalid --auth-store value: "${opts.authStore}". Only "file" is allowed.`)
+        }
+        await login(getCtx(), {url, yes: opts?.yes, useEnv: opts?.useEnv, authStore})
       })
 
   const addLogout = (parent: Command) =>

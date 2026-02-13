@@ -48,10 +48,7 @@ mock.module('node:fs/promises', {
       const pathStr = String(args[0])
       const basename = pathStr.split('/').pop() || ''
       if (basename === '.wondoc.json') {
-        return JSON.stringify({active: mockServerKey, servers: {[mockServerKey]: {}}})
-      }
-      if (basename === '.wondoc-cli-credentials.json') {
-        return JSON.stringify({[`${mockConfig.serverUrl}:${mockConfig.username}`]: mockConfig})
+        return JSON.stringify({active: mockServerKey, servers: {[mockServerKey]: {password: mockConfig.password}}})
       }
       return (originalReadFile as (...a: unknown[]) => Promise<string>)(...args)
     },
@@ -158,7 +155,7 @@ mock.module('node:child_process', {
 // Import after mocking
 const {pullViaTar} = await import('../../../src/cli/utils/pullViaTar.ts')
 import {createMockCliContext} from '../test-context.ts'
-const mockCliContext = createMockCliContext({authType: 'file'})
+const mockCliContext = createMockCliContext()
 
 async function pathExists(path: string): Promise<boolean> {
   try {
