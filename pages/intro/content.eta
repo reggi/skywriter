@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skywriter</title>
+</head>
+<body>
+  <header class="sky-container" role="banner">
+    <canvas id="skyCanvas" aria-hidden="true"></canvas>
+    <canvas id="cloudCanvas" aria-hidden="true"></canvas>
+    <div class="logo">
+      <h1 class="sr-only">Skywriter</h1>
+      <canvas id="logoCanvas" role="img" aria-label="Skywriter logo in pixelated retro style"></canvas>
+    </div>
+    <div class="fade-transition" aria-hidden="true">
+      <canvas id="fadeCanvas"></canvas>
+    </div>
+  </header>
+  <main class="content">
+    <h2>Welcome! 🎉</h2>
+    <p><strong>You just set up your Skywriter server! Congrats!</strong></p>
+    <p><strong>This page itself is the first page you have — it's <code><span class="current-path"></span></code> and you can edit it by visiting <a class="edit-link" href="/edit"><span class="edit-path"></span></a>.</strong></p>
+    <p><strong><a href="https://skywriter.dev/">Documentation</a> · <a href="https://github.com/reggi/skywriter">GitHub</a> · <a href="https://www.npmjs.com/package/skywriter">npm</a></strong></p>
+    <hr>
+    <h3>Create your account</h3>
+    <p><strong>If you have <code>ALLOW_SIGNUP=true</code> in your env vars you'll see a signup box on the edit page. If not, you'll need to add it.</strong></p>
+    <p><strong>When you sign up the signup box will go away and only a login box will remain, because there's a <code>SIGNUP_LIMIT=1</code> by default (so you don't have to restart your server).</strong></p>
+    <p><strong>After your account is created you'll be redirected to the editor and can view and edit this doc!</strong></p>
+    <hr>
+    <h3>Try the CLI</h3>
+    <p><strong>The CLI will allow you to login and download this doc as well — try it out!</strong></p>
+    <pre><code>npm i skywriter -g
+
+skywriter login <span class="host-domain"></span> -y
+
+skywriter pull <span class="current-path"></span> --via=tar --no-git</code></pre>
+    <p><strong>This will download all of the files associated with this page.</strong></p>
+  </main>
+</body>
+</html>

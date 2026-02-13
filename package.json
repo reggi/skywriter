@@ -13,7 +13,7 @@
   "files": [
     "dist",
     "migrations",
-    "pages"
+    "pages/intro"
   ],
   "scripts": {
     "migrate:up": "node-pg-migrate up",
