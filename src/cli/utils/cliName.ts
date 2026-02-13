@@ -15,6 +15,13 @@ export function getCliName(): string {
   return firstKey
 }
 
+export function getCliVersion(): string {
+  const packageJsonUrl = new URL('../../../package.json', import.meta.url)
+  const text = readFileSync(fileURLToPath(packageJsonUrl), 'utf8')
+  const parsed = JSON.parse(text) as {version?: string}
+  return parsed.version ?? '0.0.0'
+}
+
 export function getCliId(): string {
   return getCliName().replace(/[^a-zA-Z0-9._-]/g, '-')
 }
