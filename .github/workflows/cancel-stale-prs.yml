@@ -1,0 +1,85 @@
+name: Cancel Stale PR Workflows
+
+# When main is updated, cancel in-flight CI runs for PRs that are now out-of-date
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  cancel-stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel outdated PR workflow runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const baseSha = context.sha;
+
+            // Get all open pull requests targeting main/master
+            const pulls = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              base: context.ref.replace('refs/heads/', ''),
+              per_page: 100,
+            });
+
+            for (const pr of pulls.data) {
+              // Check if the PR branch is behind the base branch
+              const comparison = await github.rest.repos.compareCommits({
+                owner,
+                repo,
+                base: pr.head.sha,
+                head: baseSha,
+              });
+
+              // If base has commits ahead, the PR is out-of-date
+              if (comparison.data.ahead_by === 0) {
+                core.info(`PR #${pr.number} is up-to-date, skipping`);
+                continue;
+              }
+
+              core.info(`PR #${pr.number} is behind by ${comparison.data.ahead_by} commits, cancelling workflows`);
+
+              // Find in-progress workflow runs for this PR
+              const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                event: 'pull_request',
+                status: 'in_progress',
+                head_sha: pr.head.sha,
+                per_page: 100,
+              });
+
+              // Also check queued runs
+              const queuedRuns = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                event: 'pull_request',
+                status: 'queued',
+                head_sha: pr.head.sha,
+                per_page: 100,
+              });
+
+              const allRuns = [...runs.data.workflow_runs, ...queuedRuns.data.workflow_runs];
+
+              for (const run of allRuns) {
+                core.info(`Cancelling workflow run ${run.id} (${run.name}) for PR #${pr.number}`);
+                try {
+                  await github.rest.actions.cancelWorkflowRun({
+                    owner,
+                    repo,
+                    run_id: run.id,
+                  });
+                } catch (e) {
+                  // Run may have completed between listing and cancelling
+                  core.warning(`Failed to cancel run ${run.id}: ${e.message}`);
+                }
+              }
+
+              if (allRuns.length === 0) {
+                core.info(`No in-progress or queued runs found for PR #${pr.number}`);
+              }
+            }
