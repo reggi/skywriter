@@ -7,6 +7,10 @@ on:
     branches: [main, master]
     types: [opened, edited, synchronize, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Validate PR title follows conventional commits
   commitlint:
