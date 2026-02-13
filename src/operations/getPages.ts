@@ -23,6 +23,7 @@ export const getPages: DbOperation<
     includeSlot: true,
     includeTemplate: true,
     draft: false,
+    excludeTemplates: true,
     ...options,
   })
 
