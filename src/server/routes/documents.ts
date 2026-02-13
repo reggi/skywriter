@@ -3,7 +3,7 @@ import {responder} from '../../responder/index.ts'
 import type {AppContext} from '../utils/types.ts'
 import {NotFoundError} from '../utils/NotFoundError.ts'
 import {render} from '../../render/index.ts'
-import {functionContext} from '../../utils/functionContext.ts'
+import {functionContext} from '../../fn/functionContext.ts'
 import {getRenderDocument} from '../../operations/getRenderDocument.ts'
 
 export const documents: MiddlewareHandler<AppContext> = async (c, next) => {

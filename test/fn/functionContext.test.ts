@@ -1,6 +1,6 @@
 import {describe, it, beforeEach, before, after} from 'node:test'
 import assert from 'node:assert/strict'
-import {functionContext} from '../../src/utils/functionContext.ts'
+import {functionContext} from '../../src/fn/functionContext.ts'
 import {createDatabaseContext, closeDatabaseContext, closePool} from '../../src/db/index.ts'
 import {upsert} from '../../src/operations/upsert.ts'
 import {removeDocument} from '../../src/operations/removeDocument.ts'

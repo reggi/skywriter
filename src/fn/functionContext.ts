@@ -5,15 +5,16 @@ import {
   type RenderDocumentsManyQuery,
   type UploadsManyQuery,
 } from '../operations/types.ts'
+import type {FunctionContext} from './types.ts'
 import {getPage} from '../operations/getPage.ts'
 import {getPages} from '../operations/getPages.ts'
 import {getUploads} from '../operations/getUploads.ts'
 
-export function functionContext(
+export const functionContext = (
   client: PoolClient,
   doc: RenderDocument | {path: string},
   requestQuery?: Record<string, string>,
-) {
+): FunctionContext => {
   const safeQuery = requestQuery || {}
 
   return {

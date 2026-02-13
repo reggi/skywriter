@@ -1,4 +1,5 @@
-import type {RenderDocumentsManyQuery, DbOperation, FunctionContext} from './types.ts'
+import type {RenderDocumentsManyQuery, DbOperation} from './types.ts'
+import type {functionContext} from '../fn/functionContext.ts'
 import {getRenderDocuments} from './getRenderDocuments.ts'
 import {render} from '../render/index.ts'
 
@@ -13,7 +14,7 @@ import {render} from '../render/index.ts'
  * @returns Array of rendered documents
  */
 export const getPages: DbOperation<
-  [RenderDocumentsManyQuery | undefined, Record<string, string> | undefined, FunctionContext],
+  [RenderDocumentsManyQuery | undefined, Record<string, string> | undefined, typeof functionContext],
   Awaited<ReturnType<typeof render>>[]
 > = async (client, options, requestQuery, fn) => {
   const renderDocuments = await getRenderDocuments(client, {

@@ -1,4 +1,5 @@
-import type {DocumentQuery, DbOperation, FunctionContext} from './types.ts'
+import type {DocumentQuery, DbOperation} from './types.ts'
+import type {functionContext} from '../fn/functionContext.ts'
 import {getRenderDocument} from './getRenderDocument.ts'
 import {render} from '../render/index.ts'
 
@@ -13,7 +14,7 @@ import {render} from '../render/index.ts'
  * @returns Rendered document or null if not found
  */
 export const getPage: DbOperation<
-  [DocumentQuery, Record<string, string> | undefined, FunctionContext],
+  [DocumentQuery, Record<string, string> | undefined, typeof functionContext],
   Awaited<ReturnType<typeof render>> | null
 > = async (client, query, requestQuery, fn) => {
   const renderDocument = await getRenderDocument(client, query, {

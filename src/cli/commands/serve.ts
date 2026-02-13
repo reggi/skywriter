@@ -1,6 +1,6 @@
 import {Hono} from 'hono'
 import {serve as honoServe} from '@hono/node-server'
-import {clearCache} from '../../utils/functionContextClient.ts'
+import {clearCache} from '../../fn/functionContextClient.ts'
 import type {Server} from 'node:http'
 import {discoverDocuments} from '../utils/discover.ts'
 import {watchForChanges} from '../utils/watchForChanges.ts'
