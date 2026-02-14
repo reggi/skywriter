@@ -1334,6 +1334,111 @@ form {
 }
 
 /* ========================================
+   Keyboard shortcuts overlay
+   ======================================== */
+
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+}
+
+.shortcuts-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.shortcuts-panel {
+  background: #282c34;
+  border: 1px solid #3e4451;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #3e4451;
+}
+
+.shortcuts-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.shortcuts-close {
+  background: none;
+  border: none;
+  color: #abb2bf;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.shortcuts-close:hover {
+  color: #ffffff;
+}
+
+.shortcuts-list {
+  padding: 0.75rem 1.25rem;
+}
+
+.shortcuts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+.shortcuts-row + .shortcuts-row {
+  border-top: 1px solid #21252b;
+}
+
+.shortcuts-desc {
+  color: #abb2bf;
+  font-size: 0.9rem;
+}
+
+.shortcuts-keys {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #abb2bf;
+  font-size: 0.85rem;
+}
+
+.shortcuts-keys kbd {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #21252b;
+  border: 1px solid #3e4451;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.8rem;
+  color: #e5c07b;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+/* ========================================
    Accessibility utilities
    ======================================== */
 

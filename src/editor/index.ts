@@ -31,6 +31,7 @@ import {redirects} from './components/redirects.ts'
 import {uploads} from './components/uploads.ts'
 import {dragAndDrop} from './components/dragAndDrop.ts'
 import {resizableSplit} from './components/resizableSplit.ts'
+import {keyboardShortcuts} from './components/keyboardShortcuts.ts'
 
 // Initialize editors
 async function initialize() {
@@ -367,6 +368,9 @@ body {
 
   // Initialize resizable split
   resizableSplit.init()
+
+  // Initialize keyboard shortcuts overlay
+  keyboardShortcuts.init({editors: editorInstances})
 }
 
 // Configure ACE to use bundled modules only (no dynamic loading)
