@@ -39,6 +39,15 @@ describe('transformModuleCode', () => {
     assert.ok(result.includes('__exports.value'))
     assert.ok(result.includes('__exports.name'))
   })
+
+  test('should preserve local bindings for named exports', () => {
+    const code = `export const value = 42;\nconst doubled = value * 2;`
+    const result = transformModuleCode(code)
+    // The local binding `value` should be preserved (not renamed to __exports_value)
+    assert.ok(result.includes('const value = 42'))
+    assert.ok(!result.includes('__exports_value'))
+    assert.ok(result.includes('__exports.value = value'))
+  })
 })
 
 describe('extractFunctions', () => {
@@ -143,8 +152,28 @@ describe('evaluateModule', () => {
 
     test('should handle function that returns undefined', async () => {
       const code = `export default function() { return undefined; }`
-      const {callResult} = await evaluateModule(code, [{}])
+      const {callResult, called} = await evaluateModule(code, [{}])
       assert.equal(callResult, undefined)
+      assert.equal(called, true)
+    })
+
+    test('should set called to false when no default export function exists', async () => {
+      const code = `export default { status: 'ok' };`
+      const {called} = await evaluateModule(code, [{}])
+      assert.equal(called, false)
+    })
+
+    test('should set called to false when no callArgs provided', async () => {
+      const code = `export default function() { return 42; }`
+      const {called} = await evaluateModule(code)
+      assert.equal(called, false)
+    })
+
+    test('should allow named exports to reference each other', async () => {
+      const code = `export const value = 42;\nexport const doubled = value * 2;`
+      const {exports} = await evaluateModule(code)
+      assert.equal(exports.value, 42)
+      assert.equal(exports.doubled, 84)
     })
 
     test('should handle function that throws error', async () => {

@@ -186,15 +186,17 @@ export function transformModuleCode(code: string): string {
   })
 
   // Handle: export const/let/var name = ...
+  // Preserve the original local binding and strip only the `export` keyword,
+  // then assign to __exports after initialization so intra-module references work.
   transformed = transformed.replace(/export\s+(const|let|var)\s+(\w+)/g, (_, keyword, name) => {
     exports.push(name)
-    return `__exports.${name} = undefined; ${keyword} __exports_${name}`
+    return `${keyword} ${name}`
   })
 
   // Add assignment after initialization for named exports
   for (const name of exports) {
     if (name !== 'default') {
-      transformed += `\n__exports.${name} = __exports_${name};`
+      transformed += `\n__exports.${name} = ${name};`
     }
   }
 
@@ -240,7 +242,7 @@ export function extractFunctions(obj: unknown): {sanitized: unknown; registry: R
 export async function evaluateModule(
   code: string,
   callArgs?: unknown[],
-): Promise<{exports: Record<string, unknown>; callResult?: unknown}> {
+): Promise<{exports: Record<string, unknown>; callResult?: unknown; called: boolean}> {
   const transformed = transformModuleCode(code)
 
   // Extract any functions (like fn.getPage) from the args
@@ -332,6 +334,7 @@ export async function evaluateModule(
     fullScript += `
 ;(async () => {
   if (typeof __exports.default === 'function') {
+    __result.called = true;
     __result.value = await __exports.default(...__callArgs);
   }
 })();`
@@ -349,7 +352,7 @@ export async function evaluateModule(
   const exports = JSON.parse(exportsJson) as Record<string, unknown>
 
   const resultJson = vm.runInContext('JSON.stringify(__result)', context) as string
-  const result = JSON.parse(resultJson) as {value?: unknown}
+  const result = JSON.parse(resultJson) as {value?: unknown; called?: boolean}
 
-  return {exports, callResult: result.value}
+  return {exports, callResult: result.value, called: result.called === true}
 }

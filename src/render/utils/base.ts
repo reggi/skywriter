@@ -297,9 +297,9 @@ export async function baseRender(options: {
   // Evaluate server-side JavaScript if present
   if (doc.server) {
     try {
-      const {exports: moduleExports, callResult} = await evaluateModule(doc.server.trim(), [_etaVariables])
+      const {exports: moduleExports, callResult, called} = await evaluateModule(doc.server.trim(), [_etaVariables])
 
-      if (callResult !== undefined) {
+      if (called) {
         // Default export was a function and was called inside the sandbox
         _etaVariables.server = callResult
       } else if (Object.keys(moduleExports).length > 0) {
