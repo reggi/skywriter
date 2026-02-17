@@ -27,15 +27,25 @@ const mockLog: PrefixLog = {
 }
 
 // Track executed commands
-let executedCommands: string[] = []
+let executedCommands: {file: string; args: string[]}[] = []
 let mockCommandResults: Map<string, {stdout: string; stderr: string; error?: Error}> = new Map()
 
-// Mock child_process to intercept exec calls
+// Helper to build a lookup key from file + args for mock results
+function commandKey(file: string, args: string[]): string {
+  return [file, ...args].join(' ')
+}
+
+// Mock child_process to intercept execFile calls
 mock.module('node:child_process', {
   namedExports: {
-    exec: (command: string, callback: (error: Error | null, result: {stdout: string; stderr: string}) => void) => {
-      executedCommands.push(command)
-      const result = mockCommandResults.get(command)
+    execFile: (
+      file: string,
+      args: string[],
+      callback: (error: Error | null, result: {stdout: string; stderr: string}) => void,
+    ) => {
+      executedCommands.push({file, args})
+      const key = commandKey(file, args)
+      const result = mockCommandResults.get(key)
       if (result?.error) {
         callback(result.error, {stdout: result.stdout || '', stderr: result.stderr || ''})
       } else if (result) {
@@ -129,7 +139,7 @@ describe('credentials (Windows Credential Manager)', () => {
   describe('storeCredentials', () => {
     it('calls cmdkey command to store credentials', async () => {
       // Mock the delete command (may fail if doesn't exist)
-      mockCommandResults.set('cmdkey /delete:com.wondoc.cli:https://example.com:testuser', {
+      mockCommandResults.set(commandKey('cmdkey', ['/delete', 'com.wondoc.cli:https://example.com:testuser']), {
         stdout: '',
         stderr: '',
         error: new Error('not found'),
@@ -138,11 +148,11 @@ describe('credentials (Windows Credential Manager)', () => {
       await storeCredentials(mockCtx, mockLog, 'https://example.com', 'testuser', 'testpass')
 
       // Should have tried to delete existing credential first
-      assert.ok(executedCommands.some(cmd => cmd.includes('cmdkey /delete:')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'cmdkey' && cmd.args.includes('/delete')))
       // Should have added new credential
-      assert.ok(executedCommands.some(cmd => cmd.includes('cmdkey /generic:')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('/user:testuser')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('/pass:testpass')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'cmdkey' && cmd.args.includes('/generic')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('testuser')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('testpass')))
     })
 
     it('adds server to list with default flag', async () => {
@@ -173,9 +183,9 @@ describe('credentials (Windows Credential Manager)', () => {
 
       await deleteCredentials(mockCtx, mockLog, 'https://todelete.com', 'deleteuser')
 
-      assert.ok(executedCommands.some(cmd => cmd.includes('cmdkey /delete:')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('https://todelete.com')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('deleteuser')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'cmdkey' && cmd.args.includes('/delete')))
+      assert.ok(executedCommands.some(cmd => cmd.args.some(a => a.includes('https://todelete.com'))))
+      assert.ok(executedCommands.some(cmd => cmd.args.some(a => a.includes('deleteuser'))))
     })
 
     it('removes server from list', async () => {

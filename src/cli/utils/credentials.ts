@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {exec} from 'node:child_process'
+import {execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import {platform} from 'node:os'
 import {chmod} from 'node:fs/promises'
@@ -9,7 +9,7 @@ import type {CliContext} from './types.ts'
 import type {PrefixLog} from './prefixLog.ts'
 import {createLoggedFs} from './createLoggedFs.ts'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 function getKeychainService(cliId: string): string {
   return `com.${cliId}.cli`
@@ -121,19 +121,36 @@ class KeychainCredentialStore {
   async store(serverUrl: string, username: string, password: string): Promise<void> {
     // Delete existing credential if it exists (to update it)
     try {
-      await execAsync(`security delete-internet-password -s "${serverUrl}" -a "${username}" 2>/dev/null`)
+      await execFileAsync('security', ['delete-internet-password', '-s', serverUrl, '-a', username])
     } catch {
       // Ignore errors if credential doesn't exist
     }
 
     // Add new credential
-    const cmd = `security add-internet-password -s "${serverUrl}" -a "${username}" -w "${password}" -l "${this.cliName} (${serverUrl})" -U`
-    await execAsync(cmd)
+    await execFileAsync('security', [
+      'add-internet-password',
+      '-s',
+      serverUrl,
+      '-a',
+      username,
+      '-w',
+      password,
+      '-l',
+      `${this.cliName} (${serverUrl})`,
+      '-U',
+    ])
   }
 
   async retrieve(serverUrl: string, username: string): Promise<string | null> {
     try {
-      const {stdout} = await execAsync(`security find-internet-password -s "${serverUrl}" -a "${username}" -w`)
+      const {stdout} = await execFileAsync('security', [
+        'find-internet-password',
+        '-s',
+        serverUrl,
+        '-a',
+        username,
+        '-w',
+      ])
       return stdout.trim()
     } catch {
       return null
@@ -142,7 +159,7 @@ class KeychainCredentialStore {
 
   async delete(serverUrl: string, username: string): Promise<void> {
     try {
-      await execAsync(`security delete-internet-password -s "${serverUrl}" -a "${username}"`)
+      await execFileAsync('security', ['delete-internet-password', '-s', serverUrl, '-a', username])
     } catch {
       // Ignore errors if credential doesn't exist
     }
@@ -165,9 +182,28 @@ class KeyringCredentialStore {
 
   async store(serverUrl: string, username: string, password: string): Promise<void> {
     try {
-      // Try using secret-tool if available
-      const cmd = `echo "${password}" | secret-tool store --label="${this.cliName} (${serverUrl})" service ${this.keychainService} server "${serverUrl}" username "${username}"`
-      await execAsync(cmd)
+      // Use secret-tool with --label flag and attribute key-value pairs
+      const child = execFile('secret-tool', [
+        'store',
+        '--label',
+        `${this.cliName} (${serverUrl})`,
+        'service',
+        this.keychainService,
+        'server',
+        serverUrl,
+        'username',
+        username,
+      ])
+      // secret-tool reads the secret from stdin
+      child.stdin?.write(password)
+      child.stdin?.end()
+      await new Promise<void>((resolve, reject) => {
+        child.on('close', code => {
+          if (code === 0) resolve()
+          else reject(new Error(`secret-tool exited with code ${code}`))
+        })
+        child.on('error', reject)
+      })
     } catch {
       throw new Error('Linux keyring not available. Please install libsecret-tools or use file-based storage.')
     }
@@ -175,9 +211,15 @@ class KeyringCredentialStore {
 
   async retrieve(serverUrl: string, username: string): Promise<string | null> {
     try {
-      const {stdout} = await execAsync(
-        `secret-tool lookup service ${this.keychainService} server "${serverUrl}" username "${username}"`,
-      )
+      const {stdout} = await execFileAsync('secret-tool', [
+        'lookup',
+        'service',
+        this.keychainService,
+        'server',
+        serverUrl,
+        'username',
+        username,
+      ])
       return stdout.trim()
     } catch {
       return null
@@ -186,7 +228,15 @@ class KeyringCredentialStore {
 
   async delete(serverUrl: string, username: string): Promise<void> {
     try {
-      await execAsync(`secret-tool clear service ${this.keychainService} server "${serverUrl}" username "${username}"`)
+      await execFileAsync('secret-tool', [
+        'clear',
+        'service',
+        this.keychainService,
+        'server',
+        serverUrl,
+        'username',
+        username,
+      ])
     } catch {
       // Ignore errors
     }
@@ -207,17 +257,17 @@ class WinCredentialStore {
     // Windows cmdkey command
     const target = `${this.keychainService}:${serverUrl}:${username}`
     try {
-      await execAsync(`cmdkey /delete:${target}`)
+      await execFileAsync('cmdkey', ['/delete', target])
     } catch {
       // Ignore if doesn't exist
     }
-    await execAsync(`cmdkey /generic:${target} /user:${username} /pass:${password}`)
+    await execFileAsync('cmdkey', ['/generic', target, '/user', username, '/pass', password])
   }
 
   async retrieve(serverUrl: string, username: string): Promise<string | null> {
     try {
       const target = `${this.keychainService}:${serverUrl}:${username}`
-      await execAsync(`cmdkey /list:${target}`)
+      await execFileAsync('cmdkey', ['/list', target])
       // This doesn't actually retrieve the password, just lists it
       // Windows doesn't expose credential retrieval easily from command line
       // Would need to use Node.js native bindings or fall back to file
@@ -230,7 +280,7 @@ class WinCredentialStore {
   async delete(serverUrl: string, username: string): Promise<void> {
     try {
       const target = `${this.keychainService}:${serverUrl}:${username}`
-      await execAsync(`cmdkey /delete:${target}`)
+      await execFileAsync('cmdkey', ['/delete', target])
     } catch {
       // Ignore errors
     }

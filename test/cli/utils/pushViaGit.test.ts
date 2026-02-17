@@ -166,6 +166,14 @@ mock.module('@inquirer/prompts', {
 mock.module('node:child_process', {
   namedExports: {
     exec: mockExec,
+    execFile: (
+      _file: string,
+      _args: string[],
+      callback?: (error: Error | null, result: {stdout: string; stderr: string}) => void,
+    ) => {
+      if (callback) callback(null, {stdout: '', stderr: ''})
+      return {stdin: {write: () => {}, end: () => {}}, on: () => ({})}
+    },
     spawn: () => ({on: () => {}, stdout: {on: () => {}}, stderr: {on: () => {}}}),
     spawnSync: () => ({status: 0, stdout: '', stderr: ''}),
   },
