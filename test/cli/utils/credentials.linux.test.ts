@@ -27,23 +27,57 @@ const mockLog: PrefixLog = {
 }
 
 // Track executed commands
-let executedCommands: string[] = []
+let executedCommands: {file: string; args: string[]}[] = []
 let mockCommandResults: Map<string, {stdout: string; stderr: string; error?: Error}> = new Map()
 
-// Mock child_process to intercept exec calls
+// Helper to build a lookup key from file + args for mock results
+function commandKey(file: string, args: string[]): string {
+  return [file, ...args].join(' ')
+}
+
+// Mock child_process to intercept execFile calls
 mock.module('node:child_process', {
   namedExports: {
-    exec: (command: string, callback: (error: Error | null, result: {stdout: string; stderr: string}) => void) => {
-      executedCommands.push(command)
-      const result = mockCommandResults.get(command)
-      if (result?.error) {
-        callback(result.error, {stdout: result.stdout || '', stderr: result.stderr || ''})
-      } else if (result) {
-        callback(null, {stdout: result.stdout, stderr: result.stderr})
-      } else {
-        // Default: command succeeds with empty output
-        callback(null, {stdout: '', stderr: ''})
+    execFile: (
+      file: string,
+      args: string[],
+      callback?: (error: Error | null, result: {stdout: string; stderr: string}) => void,
+    ) => {
+      executedCommands.push({file, args})
+      const key = commandKey(file, args)
+      const result = mockCommandResults.get(key)
+      if (callback) {
+        if (result?.error) {
+          callback(result.error, {stdout: result.stdout || '', stderr: result.stderr || ''})
+        } else if (result) {
+          callback(null, {stdout: result.stdout, stderr: result.stderr})
+        } else {
+          callback(null, {stdout: '', stderr: ''})
+        }
       }
+      // For the store method which uses the non-promisified form with stdin piping,
+      // return a mock child process object
+      const handlers: Record<string, ((...args: unknown[]) => void)[]> = {}
+      const child = {
+        stdin: {
+          write: () => {},
+          end: () => {},
+        },
+        on: (event: string, handler: (...args: unknown[]) => void) => {
+          if (!handlers[event]) handlers[event] = []
+          handlers[event].push(handler)
+          // Auto-resolve close event
+          if (event === 'close') {
+            if (result?.error) {
+              setTimeout(() => handler(1), 0)
+            } else {
+              setTimeout(() => handler(0), 0)
+            }
+          }
+          return child
+        },
+      }
+      return child
     },
   },
 })
@@ -131,15 +165,25 @@ describe('credentials (Linux Secret Service)', () => {
       await storeCredentials(mockCtx, mockLog, 'https://example.com', 'testuser', 'testpass')
 
       // Should have called secret-tool store
-      assert.ok(executedCommands.some(cmd => cmd.includes('secret-tool store')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('server "https://example.com"')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('username "testuser"')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'secret-tool' && cmd.args.includes('store')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('https://example.com')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('testuser')))
     })
 
     it('throws error when secret-tool is not available', async () => {
       // Mock secret-tool to fail
       mockCommandResults.set(
-        'echo "testpass" | secret-tool store --label="wondoc (https://nosecret.com)" service com.wondoc.cli server "https://nosecret.com" username "failuser"',
+        commandKey('secret-tool', [
+          'store',
+          '--label',
+          'wondoc (https://nosecret.com)',
+          'service',
+          'com.wondoc.cli',
+          'server',
+          'https://nosecret.com',
+          'username',
+          'failuser',
+        ]),
         {stdout: '', stderr: 'secret-tool not found', error: new Error('command not found')},
       )
 
@@ -156,19 +200,35 @@ describe('credentials (Linux Secret Service)', () => {
       executedCommands = []
 
       mockCommandResults.set(
-        'secret-tool lookup service com.wondoc.cli server "https://lookup.com" username "lookupuser"',
+        commandKey('secret-tool', [
+          'lookup',
+          'service',
+          'com.wondoc.cli',
+          'server',
+          'https://lookup.com',
+          'username',
+          'lookupuser',
+        ]),
         {stdout: 'lookuppass\n', stderr: ''},
       )
 
       const creds = await retrieveCredentials(mockCtx, mockLog, 'https://lookup.com', 'lookupuser')
 
-      assert.ok(executedCommands.some(cmd => cmd.includes('secret-tool lookup')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'secret-tool' && cmd.args.includes('lookup')))
       assert.equal(creds?.password, 'lookuppass')
     })
 
     it('returns null when credential not found', async () => {
       mockCommandResults.set(
-        'secret-tool lookup service com.wondoc.cli server "https://notfound.com" username "nobody"',
+        commandKey('secret-tool', [
+          'lookup',
+          'service',
+          'com.wondoc.cli',
+          'server',
+          'https://notfound.com',
+          'username',
+          'nobody',
+        ]),
         {stdout: '', stderr: '', error: new Error('not found')},
       )
 
@@ -186,9 +246,9 @@ describe('credentials (Linux Secret Service)', () => {
 
       await deleteCredentials(mockCtx, mockLog, 'https://todelete.com', 'deleteuser')
 
-      assert.ok(executedCommands.some(cmd => cmd.includes('secret-tool clear')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('server "https://todelete.com"')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('username "deleteuser"')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'secret-tool' && cmd.args.includes('clear')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('https://todelete.com')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('deleteuser')))
     })
   })
 

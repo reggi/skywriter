@@ -32,11 +32,15 @@ const mockLog: PrefixLog = {
 // Track executed commands
 let executedCommands: string[] = []
 
-// Mock child_process to intercept exec calls
+// Mock child_process to intercept execFile calls (file-based storage doesn't use it, but the import needs it)
 mock.module('node:child_process', {
   namedExports: {
-    exec: (command: string, callback: (error: Error | null, result: {stdout: string; stderr: string}) => void) => {
-      executedCommands.push(command)
+    execFile: (
+      file: string,
+      args: string[],
+      callback: (error: Error | null, result: {stdout: string; stderr: string}) => void,
+    ) => {
+      executedCommands.push([file, ...args].join(' '))
       callback(null, {stdout: '', stderr: ''})
     },
   },

@@ -27,15 +27,25 @@ const mockLog: PrefixLog = {
 }
 
 // Track executed commands
-let executedCommands: string[] = []
+let executedCommands: {file: string; args: string[]}[] = []
 let mockCommandResults: Map<string, {stdout: string; stderr: string; error?: Error}> = new Map()
 
-// Mock child_process to intercept exec calls
+// Helper to build a lookup key from file + args for mock results
+function commandKey(file: string, args: string[]): string {
+  return [file, ...args].join(' ')
+}
+
+// Mock child_process to intercept execFile calls
 mock.module('node:child_process', {
   namedExports: {
-    exec: (command: string, callback: (error: Error | null, result: {stdout: string; stderr: string}) => void) => {
-      executedCommands.push(command)
-      const result = mockCommandResults.get(command)
+    execFile: (
+      file: string,
+      args: string[],
+      callback: (error: Error | null, result: {stdout: string; stderr: string}) => void,
+    ) => {
+      executedCommands.push({file, args})
+      const key = commandKey(file, args)
+      const result = mockCommandResults.get(key)
       if (result?.error) {
         callback(result.error, {stdout: result.stdout || '', stderr: result.stderr || ''})
       } else if (result) {
@@ -139,21 +149,20 @@ describe('credentials (macOS Keychain)', () => {
   describe('storeCredentials', () => {
     it('calls security add-internet-password command', async () => {
       // Mock the delete command (may or may not exist)
-      mockCommandResults.set('security delete-internet-password -s "https://example.com" -a "testuser" 2>/dev/null', {
-        stdout: '',
-        stderr: '',
-        error: new Error('not found'),
-      })
+      mockCommandResults.set(
+        commandKey('security', ['delete-internet-password', '-s', 'https://example.com', '-a', 'testuser']),
+        {stdout: '', stderr: '', error: new Error('not found')},
+      )
 
       await storeCredentials(mockCtx, mockLog, 'https://example.com', 'testuser', 'testpass')
 
       // Should have tried to delete existing credential first
-      assert.ok(executedCommands.some(cmd => cmd.includes('security delete-internet-password')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'security' && cmd.args.includes('delete-internet-password')))
       // Should have added new credential
-      assert.ok(executedCommands.some(cmd => cmd.includes('security add-internet-password')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('-s "https://example.com"')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('-a "testuser"')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('-w "testpass"')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'security' && cmd.args.includes('add-internet-password')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('https://example.com')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('testuser')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('testpass')))
     })
 
     it('sets server as default when setAsDefault is true', async () => {
@@ -168,23 +177,22 @@ describe('credentials (macOS Keychain)', () => {
 
   describe('retrieveCredentials', () => {
     it('calls security find-internet-password command', async () => {
-      mockCommandResults.set('security find-internet-password -s "https://example.com" -a "testuser" -w', {
-        stdout: 'testpass\n',
-        stderr: '',
-      })
+      mockCommandResults.set(
+        commandKey('security', ['find-internet-password', '-s', 'https://example.com', '-a', 'testuser', '-w']),
+        {stdout: 'testpass\n', stderr: ''},
+      )
 
       const creds = await retrieveCredentials(mockCtx, mockLog, 'https://example.com', 'testuser')
 
-      assert.ok(executedCommands.some(cmd => cmd.includes('security find-internet-password')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'security' && cmd.args.includes('find-internet-password')))
       assert.equal(creds?.password, 'testpass')
     })
 
     it('returns null when credential not found', async () => {
-      mockCommandResults.set('security find-internet-password -s "https://notfound.com" -a "nobody" -w', {
-        stdout: '',
-        stderr: '',
-        error: new Error('not found'),
-      })
+      mockCommandResults.set(
+        commandKey('security', ['find-internet-password', '-s', 'https://notfound.com', '-a', 'nobody', '-w']),
+        {stdout: '', stderr: '', error: new Error('not found')},
+      )
 
       const creds = await retrieveCredentials(mockCtx, mockLog, 'https://notfound.com', 'nobody')
 
@@ -200,18 +208,17 @@ describe('credentials (macOS Keychain)', () => {
 
       await deleteCredentials(mockCtx, mockLog, 'https://todelete.com', 'deleteuser')
 
-      assert.ok(executedCommands.some(cmd => cmd.includes('security delete-internet-password')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('-s "https://todelete.com"')))
-      assert.ok(executedCommands.some(cmd => cmd.includes('-a "deleteuser"')))
+      assert.ok(executedCommands.some(cmd => cmd.file === 'security' && cmd.args.includes('delete-internet-password')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('https://todelete.com')))
+      assert.ok(executedCommands.some(cmd => cmd.args.includes('deleteuser')))
     })
 
     it('handles non-existent credential gracefully', async () => {
       // Mock the delete command to fail (credential doesn't exist)
-      mockCommandResults.set('security delete-internet-password -s "https://nonexistent.com" -a "nobody"', {
-        stdout: '',
-        stderr: '',
-        error: new Error('The specified item could not be found'),
-      })
+      mockCommandResults.set(
+        commandKey('security', ['delete-internet-password', '-s', 'https://nonexistent.com', '-a', 'nobody']),
+        {stdout: '', stderr: '', error: new Error('The specified item could not be found')},
+      )
 
       // Should not throw
       await deleteCredentials(mockCtx, mockLog, 'https://nonexistent.com', 'nobody')
@@ -240,10 +247,10 @@ describe('credentials (macOS Keychain)', () => {
     it('retrieves credentials for default server', async () => {
       await storeCredentials(mockCtx, mockLog, 'https://default.com', 'defaultuser', 'defaultpass', true)
 
-      mockCommandResults.set('security find-internet-password -s "https://default.com" -a "defaultuser" -w', {
-        stdout: 'defaultpass\n',
-        stderr: '',
-      })
+      mockCommandResults.set(
+        commandKey('security', ['find-internet-password', '-s', 'https://default.com', '-a', 'defaultuser', '-w']),
+        {stdout: 'defaultpass\n', stderr: ''},
+      )
 
       const server = await getDefaultServer(mockCtx, mockLog)
       assert.equal(server?.serverUrl, 'https://default.com')
