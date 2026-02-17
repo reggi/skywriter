@@ -63,7 +63,7 @@ export async function createApp(pool: Pool, options?: {seed?: boolean}) {
     await next()
   })
 
-  app.use('/*', withDb(pool), establishAuth(), csrfProtection(), log())
+  app.use('/*', csrfProtection(), withDb(pool), establishAuth(), log())
 
   app.all('/*', requirePathMatch(/^(.*)\.git(\/.*)?$/, authorize('Git Access'), git))
 
