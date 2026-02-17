@@ -175,10 +175,15 @@ function injectHeadingIds(html: string, headings: Array<{level: number; text: st
   return result
 }
 
+// Helper to escape HTML special characters in error messages
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 // Helper to generate error HTML
 function createErrorHtml(type: string, errorMessage: string): string {
   return `<div style="color: #d32f2f; background: #ffebee; padding: 1rem; border-left: 4px solid #d32f2f; margin: 1rem 0;">
-    <strong>${type} Error:</strong> ${errorMessage}
+    <strong>${escapeHtml(type)} Error:</strong> ${escapeHtml(errorMessage)}
   </div>`
 }
 
@@ -285,6 +290,7 @@ export async function baseRender(options: {
   // Process title first so server function can access rendered title
   _etaVariables.title = await sandboxedEtaRender(
     _etaVariables.title,
+    _etaVariables as unknown as Record<string, unknown>,
     etaVariables as unknown as Record<string, unknown>,
   )
 
@@ -325,7 +331,11 @@ export async function baseRender(options: {
 
   try {
     processedContent = firstRaw.restore(
-      await sandboxedEtaRender(firstRaw.content, etaVariables as unknown as Record<string, unknown>),
+      await sandboxedEtaRender(
+        firstRaw.content,
+        _etaVariables as unknown as Record<string, unknown>,
+        etaVariables as unknown as Record<string, unknown>,
+      ),
     )
   } catch (error) {
     templateError = error instanceof Error ? error.message : `Unknown ${type} error`
@@ -361,10 +371,17 @@ export async function baseRender(options: {
     const secondRaw = extractRawBlocks(processedContent)
     try {
       processedContent = secondRaw.restore(
-        await sandboxedEtaRender(secondRaw.content, {
-          ...etaVariables,
-          meta: enhancedMeta,
-        } as unknown as Record<string, unknown>),
+        await sandboxedEtaRender(
+          secondRaw.content,
+          {
+            ..._etaVariables,
+            meta: enhancedMeta,
+          } as unknown as Record<string, unknown>,
+          {
+            ...etaVariables,
+            meta: enhancedMeta,
+          } as unknown as Record<string, unknown>,
+        ),
       )
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : `Unknown ${type} error`

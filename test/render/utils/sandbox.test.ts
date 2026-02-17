@@ -261,6 +261,23 @@ describe('evaluateModule', () => {
       await assert.rejects(() => evaluateModule(code, [{}]))
     })
 
+    test('should block globalThis.constructor escape', async () => {
+      const code = `export default function() {
+        return { pid: globalThis.constructor.constructor('return process')().pid };
+      }`
+      await assert.rejects(() => evaluateModule(code, [{}]))
+    })
+
+    test('should not leak host file paths in error stacks', async () => {
+      const code = `export default function() {
+        try { null.x } catch(e) { return { stack: e.stack }; }
+      }`
+      const {callResult} = await evaluateModule(code, [{}])
+      const result = callResult as Record<string, string>
+      assert.ok(!result.stack.includes('file:///'), 'Stack should not contain file:/// URLs')
+      assert.ok(result.stack.includes('server.js'), 'Stack should contain sandbox filename')
+    })
+
     test('should not expose host references in globalThis', async () => {
       const code = `export default function() {
         return {
@@ -342,6 +359,16 @@ describe('sandboxedEtaRender', () => {
 
     test('should block constructor escape via inline code', async () => {
       await assert.rejects(() => sandboxedEtaRender("<%= (function(){}).constructor('return process')().pid %>", {}))
+    })
+
+    test('should block globalThis.constructor escape via this', async () => {
+      await assert.rejects(() => sandboxedEtaRender('<%= this.constructor.constructor("return process")().pid %>', {}))
+    })
+
+    test('should not leak host file paths in error stacks', async () => {
+      const result = await sandboxedEtaRender('<% try { null.x } catch(e) { %><%= e.stack %><% } %>', {})
+      assert.ok(!result.includes('file:///'), 'Stack should not contain file:/// URLs')
+      assert.ok(result.includes('template.eta'), 'Stack should contain sandbox filename')
     })
   })
 })

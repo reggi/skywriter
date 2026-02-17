@@ -7,11 +7,24 @@ const eta = new Eta({autoEscape: false, autoTrim: false, useWith: true})
 // Must run AFTER any host functions have been wrapped into sandbox-realm functions.
 const FREEZE_CONSTRUCTORS = `
   var __desc = { value: undefined, writable: false, configurable: false };
+  Object.defineProperty(globalThis, 'constructor', __desc);
   Object.defineProperty(Object.prototype, 'constructor', __desc);
   Object.defineProperty(Object.getPrototypeOf(function(){}), 'constructor', __desc);
   Object.defineProperty(Object.getPrototypeOf(async function(){}), 'constructor', __desc);
   Object.defineProperty(Object.getPrototypeOf(function*(){}), 'constructor', __desc);
   Object.defineProperty(Object.getPrototypeOf(async function*(){}), 'constructor', __desc);
+
+  // Strip host file paths from error stacks to prevent information leakage.
+  Error.prepareStackTrace = function(err, frames) {
+    var msg = err.toString();
+    var filtered = [];
+    for (var i = 0; i < frames.length; i++) {
+      var fn = frames[i].getFileName();
+      if (fn && (fn.indexOf('file:///') === 0 || fn.indexOf('/') === 0 || fn.indexOf('node:') === 0)) continue;
+      filtered.push('    at ' + frames[i].toString());
+    }
+    return filtered.length > 0 ? msg + '\\n' + filtered.join('\\n') : msg;
+  };
 `
 
 // Create a sandboxed vm context. Host functions are passed in via hostFunctions
@@ -37,10 +50,16 @@ function createSandboxContext(contextGlobals: Record<string, unknown>, setupScri
 }
 
 // Render an Eta template string inside a sandboxed vm context.
-// Template data (including Proxy-wrapped objects for usage tracking)
-// is passed directly into the context. Host globals like process,
-// require, import, fetch, etc. are not available.
-export async function sandboxedEtaRender(templateStr: string, data: Record<string, unknown>): Promise<string> {
+// Template data is JSON-serialized across the boundary so no host
+// objects (and their prototype chains) leak into the sandbox.
+// Returns the rendered string. When trackedData is provided, the
+// sandbox reports which properties were accessed so the host-side
+// usage tracker can be updated.
+export async function sandboxedEtaRender(
+  templateStr: string,
+  data: Record<string, unknown>,
+  trackedData?: Record<string, unknown>,
+): Promise<string> {
   const fnBody = eta.compileToString(templateStr)
 
   // Replace Eta's include/layout helpers that reference `this` (the Eta instance)
@@ -51,12 +70,45 @@ export async function sandboxedEtaRender(templateStr: string, data: Record<strin
     .replace(/this\.config\.escapeFunction/g, '__eta_escape')
     .replace(/this\.config\.filterFunction/g, '__eta_filter')
 
+  // Serialize raw data across the boundary via JSON so host-realm prototypes
+  // don't leak into the sandbox.
+  const {sanitized} = extractFunctions(data)
+  const dataJson = JSON.stringify(sanitized)
+
+  // Host callback to record a property access on the tracked proxy.
+  // Called from within the sandbox when template code accesses a property.
+  const __hostTrack = trackedData
+    ? (path: string) => {
+        // Walk the tracked proxy following the dotted path to trigger its get traps
+        const parts = path.split('.')
+        let current: unknown = trackedData
+        for (const part of parts) {
+          if (current && typeof current === 'object') {
+            current = (current as Record<string, unknown>)[part]
+          } else {
+            break
+          }
+        }
+      }
+    : undefined
+
+  const contextGlobals: Record<string, unknown> = {
+    __hostEscape: (str: unknown) => String(str),
+    __hostFilter: (val: unknown) => String(val),
+  }
+
+  let trackSetup = ''
+  if (__hostTrack) {
+    contextGlobals.__hostTrack = __hostTrack
+    trackSetup = `
+      var hostTrack = __hostTrack;
+      globalThis.__track = function(p) { return hostTrack(p); };
+      delete globalThis.__hostTrack;
+    `
+  }
+
   const context = createSandboxContext(
-    {
-      __templateData: data,
-      __hostEscape: (str: unknown) => String(str),
-      __hostFilter: (val: unknown) => String(val),
-    },
+    contextGlobals,
     `
       var hostEscape = __hostEscape;
       var hostFilter = __hostFilter;
@@ -64,14 +116,43 @@ export async function sandboxedEtaRender(templateStr: string, data: Record<strin
       globalThis.__eta_filter = function(v) { return hostFilter(v); };
       delete globalThis.__hostEscape;
       delete globalThis.__hostFilter;
+      ${trackSetup}
     `,
   )
+
+  // Build a proxy wrapper inside the sandbox that reports property access
+  // back to the host via __track. This replaces the old approach of passing
+  // host Proxy objects directly into the VM.
+  const trackingCode = __hostTrack
+    ? `
+    function __wrapTracked(obj, prefix) {
+      if (obj === null || obj === undefined || typeof obj !== 'object') return obj;
+      return new Proxy(obj, {
+        get: function(target, prop) {
+          if (typeof prop !== 'string') return target[prop];
+          var path = prefix ? prefix + '.' + prop : prop;
+          __track(path);
+          var val = target[prop];
+          if (val && typeof val === 'object' && !Array.isArray(val)) {
+            return __wrapTracked(val, path);
+          }
+          return val;
+        }
+      });
+    }
+    `
+    : ''
+
+  const itExpr = __hostTrack
+    ? `__wrapTracked(JSON.parse(${JSON.stringify(dataJson)}), '')`
+    : `JSON.parse(${JSON.stringify(dataJson)})`
 
   const script = `
     (async function() {
       var __eta_escape = globalThis.__eta_escape;
       var __eta_filter = globalThis.__eta_filter;
-      var it = __templateData;
+      ${trackingCode}
+      var it = ${itExpr};
       var options = {};
       ${safeFnBody}
     })()
