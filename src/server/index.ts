@@ -33,6 +33,7 @@ import {requireQuery} from './middleware/requireQuery.ts'
 import {withDb} from './middleware/withDb.ts'
 import {establishAuth} from './middleware/establishAuth.ts'
 import {log} from './middleware/log.ts'
+import {csrfProtection} from './middleware/csrfProtection.ts'
 import {requirePathMatch} from './middleware/requirePathMatch.ts'
 import {seedIfEmpty} from '../operations/seedIfEmpty.ts'
 
@@ -62,7 +63,7 @@ export async function createApp(pool: Pool, options?: {seed?: boolean}) {
     await next()
   })
 
-  app.use('/*', withDb(pool), establishAuth(), log())
+  app.use('/*', withDb(pool), establishAuth(), csrfProtection(), log())
 
   app.all('/*', requirePathMatch(/^(.*)\.git(\/.*)?$/, authorize('Git Access'), git))
 
