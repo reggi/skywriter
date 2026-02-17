@@ -491,11 +491,11 @@ test('baseRender should handle script with empty inlineTag when no script', asyn
   assert.ok(result.variableUsage.script!.inlineTag, 'script.inlineTag should be tracked')
 })
 
-test('baseRender should track function values in context', async () => {
+test('baseRender should drop function values from context in templates', async () => {
   const doc: VirtualDoc = {
     title: 'Function Tracking',
     path: '/function',
-    content: '<%= helpers.format("test") %>',
+    content: '<%= typeof helpers.format %>',
   }
 
   const result = await baseRender({
@@ -507,8 +507,9 @@ test('baseRender should track function values in context', async () => {
     },
   })
 
-  // Functions should be accessible but not wrapped in proxy
-  assert.ok(result.html.includes('TEST'), 'Should call function')
+  // Functions are serialized as marker objects across the sandbox boundary
+  // to prevent host-realm prototype chain leakage — they are not callable
+  assert.ok(result.html.includes('object'), 'Functions should be serialized as objects, not callable')
 })
 
 test('baseRender should track array values in context', async () => {
