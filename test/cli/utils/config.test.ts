@@ -41,6 +41,14 @@ mock.module('node:child_process', {
     exec: (_command: string, callback: (error: Error | null, result: {stdout: string; stderr: string}) => void) => {
       callback(null, {stdout: '', stderr: ''})
     },
+    execFile: (
+      _file: string,
+      _args: string[],
+      callback?: (error: Error | null, result: {stdout: string; stderr: string}) => void,
+    ) => {
+      if (callback) callback(null, {stdout: '', stderr: ''})
+      return {stdin: {write: () => {}, end: () => {}}, on: () => ({})}
+    },
   },
 })
 
