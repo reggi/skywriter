@@ -1,4 +1,90 @@
 import * as vm from 'node:vm'
+import {Eta} from 'eta'
+
+const eta = new Eta({autoEscape: false, autoTrim: false, useWith: true})
+
+// Inline JS for freezing all constructor properties inside a vm context.
+// Must run AFTER any host functions have been wrapped into sandbox-realm functions.
+const FREEZE_CONSTRUCTORS = `
+  var __desc = { value: undefined, writable: false, configurable: false };
+  Object.defineProperty(Object.prototype, 'constructor', __desc);
+  Object.defineProperty(Object.getPrototypeOf(function(){}), 'constructor', __desc);
+  Object.defineProperty(Object.getPrototypeOf(async function(){}), 'constructor', __desc);
+  Object.defineProperty(Object.getPrototypeOf(function*(){}), 'constructor', __desc);
+  Object.defineProperty(Object.getPrototypeOf(async function*(){}), 'constructor', __desc);
+`
+
+// Create a sandboxed vm context. Host functions are passed in via hostFunctions
+// and must be re-wrapped into sandbox-realm functions via setupScript before
+// FREEZE_CONSTRUCTORS runs. The setupScript should:
+// 1. Capture host references into local vars
+// 2. Create sandbox-realm wrapper functions on globalThis
+// 3. Delete the __host* globals
+function createSandboxContext(contextGlobals: Record<string, unknown>, setupScript: string): vm.Context {
+  const context = vm.createContext(contextGlobals)
+
+  vm.runInContext(
+    `
+    (function() {
+      ${setupScript}
+      ${FREEZE_CONSTRUCTORS}
+    })();
+  `,
+    context,
+  )
+
+  return context
+}
+
+// Render an Eta template string inside a sandboxed vm context.
+// Template data (including Proxy-wrapped objects for usage tracking)
+// is passed directly into the context. Host globals like process,
+// require, import, fetch, etc. are not available.
+export async function sandboxedEtaRender(templateStr: string, data: Record<string, unknown>): Promise<string> {
+  const fnBody = eta.compileToString(templateStr)
+
+  // Replace Eta's include/layout helpers that reference `this` (the Eta instance)
+  // with no-ops, and swap this.config references with sandbox-local functions.
+  const safeFnBody = fnBody
+    .replace(/let include = .*?;/s, 'let include = function() { return "[include not supported]"; };')
+    .replace(/let includeAsync = .*?;/s, 'let includeAsync = async function() { return "[include not supported]"; };')
+    .replace(/this\.config\.escapeFunction/g, '__eta_escape')
+    .replace(/this\.config\.filterFunction/g, '__eta_filter')
+
+  const context = createSandboxContext(
+    {
+      __templateData: data,
+      __hostEscape: (str: unknown) => String(str),
+      __hostFilter: (val: unknown) => String(val),
+    },
+    `
+      var hostEscape = __hostEscape;
+      var hostFilter = __hostFilter;
+      globalThis.__eta_escape = function(s) { return hostEscape(s); };
+      globalThis.__eta_filter = function(v) { return hostFilter(v); };
+      delete globalThis.__hostEscape;
+      delete globalThis.__hostFilter;
+    `,
+  )
+
+  const script = `
+    (async function() {
+      var __eta_escape = globalThis.__eta_escape;
+      var __eta_filter = globalThis.__eta_filter;
+      var it = __templateData;
+      var options = {};
+      ${safeFnBody}
+    })()
+  `
+
+  const s = new vm.Script(script, {filename: 'template.eta'})
+  const result = s.runInContext(context, {timeout: 5000})
+
+  if (result && typeof (result as Promise<string>).then === 'function') {
+    return (await result) as string
+  }
+  return result as string
+}
 
 // Transform ES module syntax to CommonJS-style for vm evaluation
 export function transformModuleCode(code: string): string {
@@ -93,34 +179,38 @@ export async function evaluateModule(
     return JSON.stringify(result)
   }
 
-  // Only __fnBridge crosses into the sandbox — it's a host function but the
-  // sandbox's Function.prototype.constructor is frozen, so it can't be used
-  // to escape. The sandbox never receives host objects it can walk.
-  const context = vm.createContext({
-    __fnBridge,
-    console: Object.freeze({
-      log: console.log,
-      warn: console.warn,
-      error: console.error,
-      info: console.info,
-      debug: console.debug,
-    }),
-  })
+  const context = createSandboxContext(
+    {
+      __hostFnBridge: __fnBridge,
+      __hostConsole: {
+        log: console.log,
+        warn: console.warn,
+        error: console.error,
+        info: console.info,
+        debug: console.debug,
+      },
+    },
+    `
+      // Wrap host functions into sandbox-realm functions BEFORE constructors
+      // are frozen, so .constructor on these wrappers is undefined.
+      var hostBridge = __hostFnBridge;
+      var hostConsole = __hostConsole;
+      globalThis.__fnBridge = function(key, argsJson) { return hostBridge(key, argsJson); };
+      globalThis.console = Object.freeze({
+        log: function() { return hostConsole.log.apply(hostConsole, arguments); },
+        warn: function() { return hostConsole.warn.apply(hostConsole, arguments); },
+        error: function() { return hostConsole.error.apply(hostConsole, arguments); },
+        info: function() { return hostConsole.info.apply(hostConsole, arguments); },
+        debug: function() { return hostConsole.debug.apply(hostConsole, arguments); },
+      });
+      delete globalThis.__hostFnBridge;
+      delete globalThis.__hostConsole;
+    `,
+  )
 
-  // Freeze every constructor the sandbox could use to reach the host Function
-  // and set up the sandbox-internal variables & function-ref hydration.
+  // Set up sandbox-internal variables and function-ref hydration
   vm.runInContext(
     `
-    'use strict';
-    (function() {
-      const desc = { value: undefined, writable: false, configurable: false };
-      Object.defineProperty(Object.prototype, 'constructor', desc);
-      Object.defineProperty(Object.getPrototypeOf(function(){}), 'constructor', desc);
-      Object.defineProperty(Object.getPrototypeOf(async function(){}), 'constructor', desc);
-      Object.defineProperty(Object.getPrototypeOf(function*(){}), 'constructor', desc);
-      Object.defineProperty(Object.getPrototypeOf(async function*(){}), 'constructor', desc);
-    })();
-
     var __exports = {};
     var __result = {};
     var __callArgs = ${argsJson};

@@ -1,9 +1,8 @@
 import {marked, type Token} from 'marked'
-import {Eta} from 'eta'
 import {usageTracker} from './usageTracker.ts'
 import {extractRawBlocks} from './extractRawBlocks.ts'
 import path from 'path'
-import {evaluateModule} from './sandbox.ts'
+import {evaluateModule, sandboxedEtaRender} from './sandbox.ts'
 
 // Configure marked to preserve HTML in code blocks
 marked.setOptions({
@@ -284,12 +283,10 @@ export async function baseRender(options: {
   const [etaVariables, getUsageSnapshot] = usageTracker(_etaVariables)
 
   // Process title first so server function can access rendered title
-  const eta = new Eta({
-    autoEscape: false,
-    autoTrim: false,
-    useWith: true,
-  })
-  _etaVariables.title = await eta.renderStringAsync(_etaVariables.title, etaVariables)
+  _etaVariables.title = await sandboxedEtaRender(
+    _etaVariables.title,
+    etaVariables as unknown as Record<string, unknown>,
+  )
 
   // Evaluate server-side JavaScript if present
   if (doc.server) {
@@ -327,7 +324,9 @@ export async function baseRender(options: {
   const firstRaw = extractRawBlocks(processedContent)
 
   try {
-    processedContent = firstRaw.restore(await eta.renderStringAsync(firstRaw.content, etaVariables))
+    processedContent = firstRaw.restore(
+      await sandboxedEtaRender(firstRaw.content, etaVariables as unknown as Record<string, unknown>),
+    )
   } catch (error) {
     templateError = error instanceof Error ? error.message : `Unknown ${type} error`
     // Capture usage before spreading to avoid tracking the spread itself
@@ -362,10 +361,10 @@ export async function baseRender(options: {
     const secondRaw = extractRawBlocks(processedContent)
     try {
       processedContent = secondRaw.restore(
-        await eta.renderStringAsync(secondRaw.content, {
+        await sandboxedEtaRender(secondRaw.content, {
           ...etaVariables,
           meta: enhancedMeta,
-        }),
+        } as unknown as Record<string, unknown>),
       )
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : `Unknown ${type} error`

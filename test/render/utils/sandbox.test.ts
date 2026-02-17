@@ -1,6 +1,11 @@
 import {describe, test} from 'node:test'
 import assert from 'node:assert/strict'
-import {evaluateModule, transformModuleCode, extractFunctions} from '../../../src/render/utils/sandbox.ts'
+import {
+  evaluateModule,
+  transformModuleCode,
+  extractFunctions,
+  sandboxedEtaRender,
+} from '../../../src/render/utils/sandbox.ts'
 
 describe('transformModuleCode', () => {
   test('should transform export default function', () => {
@@ -229,9 +234,114 @@ describe('evaluateModule', () => {
       await assert.rejects(() => evaluateModule(code, [{}]))
     })
 
+    test('should block constructor escape via console.log', async () => {
+      const code = `export default function() {
+        const F = console.log.constructor;
+        const p = F('return process')();
+        return { env: p.env };
+      }`
+      await assert.rejects(() => evaluateModule(code, [{}]))
+    })
+
+    test('should block constructor escape via console method prototype', async () => {
+      const code = `export default function() {
+        const F = Object.getPrototypeOf(console.warn).constructor;
+        const p = F('return process')();
+        return { env: p.env };
+      }`
+      await assert.rejects(() => evaluateModule(code, [{}]))
+    })
+
+    test('should block constructor escape via __fnBridge', async () => {
+      const code = `export default function() {
+        const F = __fnBridge.constructor;
+        const p = F('return process')();
+        return { env: p.env };
+      }`
+      await assert.rejects(() => evaluateModule(code, [{}]))
+    })
+
+    test('should not expose host references in globalThis', async () => {
+      const code = `export default function() {
+        return {
+          hostBridge: typeof __hostFnBridge,
+          hostConsole: typeof __hostConsole,
+        };
+      }`
+      const {callResult} = await evaluateModule(code, [{}])
+      const result = callResult as Record<string, string>
+      assert.equal(result.hostBridge, 'undefined')
+      assert.equal(result.hostConsole, 'undefined')
+    })
+
     test('should enforce execution timeout', async () => {
       const code = `export default function() { while(true) {} }`
       await assert.rejects(() => evaluateModule(code, [{}]), /Script execution timed out/)
+    })
+  })
+})
+
+describe('sandboxedEtaRender', () => {
+  describe('functional behavior', () => {
+    test('should render simple variable interpolation', async () => {
+      const result = await sandboxedEtaRender('<%= title %>', {title: 'Hello'})
+      assert.equal(result, 'Hello')
+    })
+
+    test('should render conditionals', async () => {
+      const result = await sandboxedEtaRender('<% if (show) { %>visible<% } %>', {show: true})
+      assert.equal(result, 'visible')
+    })
+
+    test('should render loops', async () => {
+      const result = await sandboxedEtaRender('<% items.forEach(function(item) { %><%= item %><% }) %>', {
+        items: ['a', 'b'],
+      })
+      assert.equal(result, 'ab')
+    })
+
+    test('should render nested object access', async () => {
+      const result = await sandboxedEtaRender('<%= data.key %>', {data: {key: 'value'}})
+      assert.equal(result, 'value')
+    })
+
+    test('should handle async expressions', async () => {
+      const result = await sandboxedEtaRender('<%= await Promise.resolve("async") %>', {})
+      assert.equal(result, 'async')
+    })
+  })
+
+  describe('security - blocks dangerous access', () => {
+    test('should block process access', async () => {
+      await assert.rejects(() => sandboxedEtaRender('<%= process.pid %>', {}), /process is not defined/)
+    })
+
+    test('should block process.env access', async () => {
+      await assert.rejects(() => sandboxedEtaRender('<%= process.env.HOME %>', {}), /process is not defined/)
+    })
+
+    test('should block require()', async () => {
+      await assert.rejects(() => sandboxedEtaRender("<% const fs = require('fs') %>", {}), /require is not defined/)
+    })
+
+    test('should block import()', async () => {
+      await assert.rejects(() =>
+        sandboxedEtaRender("<% const fs = await import('fs') %><%= fs.readdirSync('.')[0] %>", {}),
+      )
+    })
+
+    test('should not expose fetch', async () => {
+      const result = await sandboxedEtaRender('<%= typeof fetch %>', {})
+      assert.equal(result, 'undefined')
+    })
+
+    test('should not expose setTimeout', async () => {
+      const result = await sandboxedEtaRender('<%= typeof setTimeout %>', {})
+      assert.equal(result, 'undefined')
+    })
+
+    test('should block constructor escape via inline code', async () => {
+      await assert.rejects(() => sandboxedEtaRender("<%= (function(){}).constructor('return process')().pid %>", {}))
     })
   })
 })
