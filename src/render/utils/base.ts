@@ -3,6 +3,7 @@ import {Eta} from 'eta'
 import {usageTracker} from './usageTracker.ts'
 import {extractRawBlocks} from './extractRawBlocks.ts'
 import path from 'path'
+import {evaluateModule} from './sandbox.ts'
 
 // Configure marked to preserve HTML in code blocks
 marked.setOptions({
@@ -238,12 +239,6 @@ function hasMarkdown(content: string): boolean {
   return false
 }
 
-// Helper to evaluate a module string and extract exports
-async function evaluateModule(code: string): Promise<Record<string, unknown>> {
-  const url = `data:text/javascript;charset=utf-8,${encodeURIComponent(code)}`
-  return import(url) as Promise<Record<string, unknown>>
-}
-
 export async function baseRender(options: {
   doc: VirtualDoc
   context?: Record<string, unknown>
@@ -299,19 +294,14 @@ export async function baseRender(options: {
   // Evaluate server-side JavaScript if present
   if (doc.server) {
     try {
-      const moduleExports = await evaluateModule(doc.server.trim())
+      const {exports: moduleExports, callResult} = await evaluateModule(doc.server.trim(), [_etaVariables])
 
-      if (moduleExports.default) {
-        // Call the default export if it's a function
-        if (typeof moduleExports.default === 'function') {
-          const result = await moduleExports.default(etaVariables)
-          _etaVariables.server = result
-        } else {
-          _etaVariables.server = moduleExports.default
-        }
-      } else {
-        // No default export, use all exports
-        _etaVariables.server = moduleExports
+      if (callResult !== undefined) {
+        // Default export was a function and was called inside the sandbox
+        _etaVariables.server = callResult
+      } else if (Object.keys(moduleExports).length > 0) {
+        // Static default export or named exports
+        _etaVariables.server = moduleExports.default ?? moduleExports
       }
     } catch (error) {
       console.error('Server function evaluation error:', error)
