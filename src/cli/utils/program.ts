@@ -243,12 +243,24 @@ function createProgram(): Command {
   program
     .command('host')
     .description('Start the production server')
-    .option('-p, --port <port>', 'Port to serve on', '3000')
+    .option('-p, --port <port>', 'Port to serve on', process.env.PORT || '3000')
     .option('--migrate', 'Run pending database migrations before starting')
     .option('--no-seed', 'Skip seeding demo content on empty database')
     .action(async (options: {port: string; migrate?: boolean; seed?: boolean}) => {
       const port = parseInt(options.port, 10)
-      const migrate = options.migrate || false
+      const migrateEnv = process.env.MIGRATE
+      const envMigrate = migrateEnv !== undefined ? migrateEnv !== 'false' : undefined
+      let migrate: boolean
+      if (envMigrate !== undefined && options.migrate && envMigrate === false) {
+        console.warn(`Warning: MIGRATE=${migrateEnv} env var overrides --migrate flag`)
+        migrate = false
+      } else if (envMigrate !== undefined) {
+        migrate = envMigrate
+      } else if (options.migrate) {
+        migrate = true
+      } else {
+        migrate = false
+      }
       const seed = options.seed !== false
       await host(getCtx(), port, migrate, seed)
     })
