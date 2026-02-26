@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/reggi/skywriter/compare/skywriter-v1.1.0...skywriter-v1.2.0) (2026-02-26)
+
+
+### Features
+
+* adds word wrap ([#29](https://github.com/reggi/skywriter/issues/29)) ([ec1d1f8](https://github.com/reggi/skywriter/commit/ec1d1f80404e64c8abf6ad26c351ca16a97ff469))
+
+
+### Bug Fixes
+
+* getPages loop ([#28](https://github.com/reggi/skywriter/issues/28)) ([9763674](https://github.com/reggi/skywriter/commit/97636740c11f1cd5f4af128dc923628848779bd7))
+* pass array args to shell ([#31](https://github.com/reggi/skywriter/issues/31)) ([479dcba](https://github.com/reggi/skywriter/commit/479dcba535d86910a6bef3e91d7d70b9b2db1a75))
+* upgrade npm and add verbose logging for OIDC publish ([56f52d9](https://github.com/reggi/skywriter/commit/56f52d985dd1ef13f51313fcf3c18f8e7421f168))
+
 ## [1.1.0](https://github.com/reggi/skywriter/compare/skywriter-v1.0.1...skywriter-v1.1.0) (2026-02-13)
 
 
