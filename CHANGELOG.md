@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/reggi/skywriter/compare/skywriter-v1.2.0...skywriter-v1.2.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* Docker deployment healthcheck and startup crashes ([#37](https://github.com/reggi/skywriter/issues/37)) ([6f9ba9e](https://github.com/reggi/skywriter/commit/6f9ba9e7d21e8fb083954e13b2d5c0ae11353242))
+
 ## [1.2.0](https://github.com/reggi/skywriter/compare/skywriter-v1.1.0...skywriter-v1.2.0) (2026-02-26)
 
 
