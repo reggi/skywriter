@@ -16,12 +16,13 @@ RUN npm ci --omit=dev
 
 # Stage 3: Production image
 FROM node:22-alpine
+RUN apk add --no-cache git
 WORKDIR /app
 COPY package.json ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/pages ./pages
-USER node
+RUN mkdir -p uploads .git-repos
 EXPOSE 3000
-CMD ["sh", "-c", "npm run migrate:up && npm start"]
+CMD ["node", "dist/cli/index.js", "host", "--migrate"]
