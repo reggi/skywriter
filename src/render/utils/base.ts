@@ -1,8 +1,8 @@
 import {marked, type Token} from 'marked'
-import {Eta} from 'eta'
 import {usageTracker} from './usageTracker.ts'
 import {extractRawBlocks} from './extractRawBlocks.ts'
 import path from 'path'
+import {evaluateModule, sandboxedEtaRender} from './sandbox.ts'
 
 // Configure marked to preserve HTML in code blocks
 marked.setOptions({
@@ -175,10 +175,15 @@ function injectHeadingIds(html: string, headings: Array<{level: number; text: st
   return result
 }
 
+// Helper to escape HTML special characters in error messages
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 // Helper to generate error HTML
 function createErrorHtml(type: string, errorMessage: string): string {
   return `<div style="color: #d32f2f; background: #ffebee; padding: 1rem; border-left: 4px solid #d32f2f; margin: 1rem 0;">
-    <strong>${type} Error:</strong> ${errorMessage}
+    <strong>${escapeHtml(type)} Error:</strong> ${escapeHtml(errorMessage)}
   </div>`
 }
 
@@ -238,12 +243,6 @@ function hasMarkdown(content: string): boolean {
   return false
 }
 
-// Helper to evaluate a module string and extract exports
-async function evaluateModule(code: string): Promise<Record<string, unknown>> {
-  const url = `data:text/javascript;charset=utf-8,${encodeURIComponent(code)}`
-  return import(url) as Promise<Record<string, unknown>>
-}
-
 export async function baseRender(options: {
   doc: VirtualDoc
   context?: Record<string, unknown>
@@ -289,29 +288,23 @@ export async function baseRender(options: {
   const [etaVariables, getUsageSnapshot] = usageTracker(_etaVariables)
 
   // Process title first so server function can access rendered title
-  const eta = new Eta({
-    autoEscape: false,
-    autoTrim: false,
-    useWith: true,
-  })
-  _etaVariables.title = await eta.renderStringAsync(_etaVariables.title, etaVariables)
+  _etaVariables.title = await sandboxedEtaRender(
+    _etaVariables.title,
+    _etaVariables as unknown as Record<string, unknown>,
+    etaVariables as unknown as Record<string, unknown>,
+  )
 
   // Evaluate server-side JavaScript if present
   if (doc.server) {
     try {
-      const moduleExports = await evaluateModule(doc.server.trim())
+      const {exports: moduleExports, callResult, called} = await evaluateModule(doc.server.trim(), [_etaVariables])
 
-      if (moduleExports.default) {
-        // Call the default export if it's a function
-        if (typeof moduleExports.default === 'function') {
-          const result = await moduleExports.default(etaVariables)
-          _etaVariables.server = result
-        } else {
-          _etaVariables.server = moduleExports.default
-        }
-      } else {
-        // No default export, use all exports
-        _etaVariables.server = moduleExports
+      if (called) {
+        // Default export was a function and was called inside the sandbox
+        _etaVariables.server = callResult
+      } else if (Object.keys(moduleExports).length > 0) {
+        // Static default export or named exports
+        _etaVariables.server = moduleExports.default ?? moduleExports
       }
     } catch (error) {
       console.error('Server function evaluation error:', error)
@@ -337,7 +330,13 @@ export async function baseRender(options: {
   const firstRaw = extractRawBlocks(processedContent)
 
   try {
-    processedContent = firstRaw.restore(await eta.renderStringAsync(firstRaw.content, etaVariables))
+    processedContent = firstRaw.restore(
+      await sandboxedEtaRender(
+        firstRaw.content,
+        _etaVariables as unknown as Record<string, unknown>,
+        etaVariables as unknown as Record<string, unknown>,
+      ),
+    )
   } catch (error) {
     templateError = error instanceof Error ? error.message : `Unknown ${type} error`
     // Capture usage before spreading to avoid tracking the spread itself
@@ -372,10 +371,17 @@ export async function baseRender(options: {
     const secondRaw = extractRawBlocks(processedContent)
     try {
       processedContent = secondRaw.restore(
-        await eta.renderStringAsync(secondRaw.content, {
-          ...etaVariables,
-          meta: enhancedMeta,
-        }),
+        await sandboxedEtaRender(
+          secondRaw.content,
+          {
+            ..._etaVariables,
+            meta: enhancedMeta,
+          } as unknown as Record<string, unknown>,
+          {
+            ...etaVariables,
+            meta: enhancedMeta,
+          } as unknown as Record<string, unknown>,
+        ),
       )
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : `Unknown ${type} error`

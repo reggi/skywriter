@@ -171,6 +171,10 @@ jobs:
     if: always() && (needs.up-to-date.result == 'success' || needs.up-to-date.result == 'skipped')
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: ['22', '24']
+
     services:
       postgres:
         image: postgres:16
@@ -192,7 +196,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
@@ -212,9 +216,22 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-report
+          name: coverage-report-node-${{ matrix.node-version }}
           path: coverage/
           retention-days: 30
+
+  # Summary job for branch protection (matrix jobs report as "test (22)", etc.)
+  test-status:
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "test matrix failed or was cancelled"
+            exit 1
+          fi
 
   # End-to-end tests (sharded across parallel jobs)
   e2e-shard:
