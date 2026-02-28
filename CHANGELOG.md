@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/reggi/skywriter/compare/skywriter-v1.2.1...skywriter-v1.3.0) (2026-02-28)
+
+
+### Features
+
+* add CSRF protection via SameSite cookie and Origin validation ([#35](https://github.com/reggi/skywriter/issues/35)) ([d0c5f02](https://github.com/reggi/skywriter/commit/d0c5f02523345d3ab82c797787668647b287fb4f))
+
 ## [1.2.1](https://github.com/reggi/skywriter/compare/skywriter-v1.2.0...skywriter-v1.2.1) (2026-02-26)
 
 
