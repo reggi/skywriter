@@ -148,9 +148,12 @@ export const loginPost: MiddlewareHandler<AppContext> = async (c, next) => {
 
     const session = await createSession(c.get('client'), {user_id: user.id})
 
-    // Set the session cookie without SameSite restriction for better compatibility
-    // This allows the cookie to be sent on redirects
-    c.header('Set-Cookie', `session_id=${session.session_id}; HttpOnly; Path=/; Max-Age=${30 * 24 * 60 * 60}`)
+    // Set the session cookie with SameSite=Lax for CSRF protection
+    // Lax allows the cookie on top-level navigations (GET) but blocks cross-site POST
+    c.header(
+      'Set-Cookie',
+      `session_id=${session.session_id}; HttpOnly; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax`,
+    )
 
     // Redirect to the editor page after successful login
     // This ensures the cookie is properly set and the URL is clean
