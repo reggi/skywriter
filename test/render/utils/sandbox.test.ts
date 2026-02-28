@@ -324,6 +324,11 @@ describe('evaluateModule', () => {
       const code = `export default function() { while(true) {} }`
       await assert.rejects(() => evaluateModule(code, [{}]), /Script execution timed out/)
     })
+
+    test('should enforce async execution timeout', async () => {
+      const code = `export default async function() { await new Promise(() => {}); }`
+      await assert.rejects(() => evaluateModule(code, [{}]), /Sandbox execution timed out/)
+    })
   })
 })
 
@@ -398,6 +403,13 @@ describe('sandboxedEtaRender', () => {
       const result = await sandboxedEtaRender('<% try { null.x } catch(e) { %><%= e.stack %><% } %>', {})
       assert.ok(!result.includes('file:///'), 'Stack should not contain file:/// URLs')
       assert.ok(result.includes('template.eta'), 'Stack should contain sandbox filename')
+    })
+
+    test('should enforce async execution timeout', async () => {
+      await assert.rejects(
+        () => sandboxedEtaRender('<%= await new Promise(() => {}) %>', {}),
+        /Sandbox execution timed out/,
+      )
     })
   })
 })

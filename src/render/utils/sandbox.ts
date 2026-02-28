@@ -3,6 +3,25 @@ import {Eta} from 'eta'
 
 const eta = new Eta({autoEscape: false, autoTrim: false, useWith: true})
 
+const SANDBOX_TIMEOUT_MS = 5000
+
+// Wraps a promise with a wall-clock timeout to prevent async stalls.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Sandbox execution timed out after ${ms}ms`)), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        clearTimeout(timer)
+        reject(error as Error)
+      },
+    )
+  })
+}
+
 // Inline JS for freezing all constructor properties inside a vm context.
 // Must run AFTER any host functions have been wrapped into sandbox-realm functions.
 const FREEZE_CONSTRUCTORS = `
@@ -92,30 +111,21 @@ export async function sandboxedEtaRender(
       }
     : undefined
 
-  const contextGlobals: Record<string, unknown> = {
-    __hostEscape: (str: unknown) => String(str),
-    __hostFilter: (val: unknown) => String(val),
-  }
-
   let trackSetup = ''
   if (__hostTrack) {
-    contextGlobals.__hostTrack = __hostTrack
     trackSetup = `
-      var hostTrack = __hostTrack;
-      globalThis.__track = function(p) { return hostTrack(p); };
-      delete globalThis.__hostTrack;
+      globalThis.__trackedPaths = [];
+      globalThis.__track = function(p) { __trackedPaths.push(p); };
     `
   }
 
+  // No host objects cross into the sandbox for template rendering.
+  // Escape/filter are trivially implemented with sandbox-internal String().
   const context = createSandboxContext(
-    contextGlobals,
+    {},
     `
-      var hostEscape = __hostEscape;
-      var hostFilter = __hostFilter;
-      globalThis.__eta_escape = function(s) { return hostEscape(s); };
-      globalThis.__eta_filter = function(v) { return hostFilter(v); };
-      delete globalThis.__hostEscape;
-      delete globalThis.__hostFilter;
+      globalThis.__eta_escape = function(s) { return String(s); };
+      globalThis.__eta_filter = function(v) { return String(v); };
       ${trackSetup}
     `,
   )
@@ -159,12 +169,25 @@ export async function sandboxedEtaRender(
   `
 
   const s = new vm.Script(script, {filename: 'template.eta'})
-  const result = s.runInContext(context, {timeout: 5000})
+  const result = s.runInContext(context, {timeout: SANDBOX_TIMEOUT_MS})
 
+  let output: string
   if (result && typeof (result as Promise<string>).then === 'function') {
-    return (await result) as string
+    output = await withTimeout(result as Promise<string>, SANDBOX_TIMEOUT_MS)
+  } else {
+    output = result as string
   }
-  return result as string
+
+  // Replay tracked property accesses on the host-side proxy
+  if (__hostTrack) {
+    const trackedJson = vm.runInContext('JSON.stringify(__trackedPaths)', context) as string
+    const trackedPaths = JSON.parse(trackedJson) as string[]
+    for (const p of trackedPaths) {
+      __hostTrack(p)
+    }
+  }
+
+  return output
 }
 
 // Transform ES module syntax to CommonJS-style for vm evaluation
@@ -262,32 +285,25 @@ export async function evaluateModule(
     return JSON.stringify(result)
   }
 
+  // __hostFnBridge is the only host function that must cross into the sandbox
+  // because it provides async bidirectional bridging for host function calls.
+  // A pure message-passing alternative would require Worker threads.
   const context = createSandboxContext(
     {
       __hostFnBridge: __fnBridge,
-      __hostConsole: {
-        log: console.log,
-        warn: console.warn,
-        error: console.error,
-        info: console.info,
-        debug: console.debug,
-      },
     },
     `
-      // Wrap host functions into sandbox-realm functions BEFORE constructors
-      // are frozen, so .constructor on these wrappers is undefined.
       var hostBridge = __hostFnBridge;
-      var hostConsole = __hostConsole;
       globalThis.__fnBridge = function(key, argsJson) { return hostBridge(key, argsJson); };
-      globalThis.console = Object.freeze({
-        log: function() { return hostConsole.log.apply(hostConsole, arguments); },
-        warn: function() { return hostConsole.warn.apply(hostConsole, arguments); },
-        error: function() { return hostConsole.error.apply(hostConsole, arguments); },
-        info: function() { return hostConsole.info.apply(hostConsole, arguments); },
-        debug: function() { return hostConsole.debug.apply(hostConsole, arguments); },
-      });
       delete globalThis.__hostFnBridge;
-      delete globalThis.__hostConsole;
+      globalThis.__consoleBuf = [];
+      globalThis.console = Object.freeze({
+        log: function() { __consoleBuf.push({l:'log', a: Array.prototype.slice.call(arguments)}); },
+        warn: function() { __consoleBuf.push({l:'warn', a: Array.prototype.slice.call(arguments)}); },
+        error: function() { __consoleBuf.push({l:'error', a: Array.prototype.slice.call(arguments)}); },
+        info: function() { __consoleBuf.push({l:'info', a: Array.prototype.slice.call(arguments)}); },
+        debug: function() { __consoleBuf.push({l:'debug', a: Array.prototype.slice.call(arguments)}); },
+      });
     `,
   )
 
@@ -341,10 +357,10 @@ export async function evaluateModule(
   }
 
   const script = new vm.Script(fullScript, {filename: 'server.js'})
-  const maybePromise = script.runInContext(context, {timeout: 5000})
+  const maybePromise = script.runInContext(context, {timeout: SANDBOX_TIMEOUT_MS})
 
   if (maybePromise && typeof maybePromise.then === 'function') {
-    await maybePromise
+    await withTimeout(maybePromise as Promise<unknown>, SANDBOX_TIMEOUT_MS)
   }
 
   // Read exports and result back from the sandbox via JSON
@@ -353,6 +369,20 @@ export async function evaluateModule(
 
   const resultJson = vm.runInContext('JSON.stringify(__result)', context) as string
   const result = JSON.parse(resultJson) as {value?: unknown; called?: boolean}
+
+  // Replay buffered console output on the host
+  const consoleBufJson = vm.runInContext(
+    `JSON.stringify(__consoleBuf, function(k, v) {
+      if (typeof v === 'function') return '[Function]';
+      return v;
+    })`,
+    context,
+  ) as string
+  const consoleBuf = JSON.parse(consoleBufJson) as Array<{l: string; a: unknown[]}>
+  for (const entry of consoleBuf) {
+    const method = entry.l as 'log' | 'warn' | 'error' | 'info' | 'debug'
+    if (console[method]) console[method](...entry.a)
+  }
 
   return {exports, callResult: result.value, called: result.called === true}
 }
