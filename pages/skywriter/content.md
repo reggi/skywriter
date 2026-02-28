@@ -106,6 +106,30 @@ npm run start
 
 Your Skywriter instance is now running at `http://localhost:3000`.
 
+### Option C: Run with Docker
+
+Pull and run the official container image directly:
+
+1. **Pull the image:**
+
+```bash
+docker pull ghcr.io/reggi/skywriter:latest
+```
+
+2. **Run the container:**
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -e DATABASE_URL="postgresql://user:password@host:5432/skywriter" \
+  -e ALLOW_SIGNUP=true \
+  ghcr.io/reggi/skywriter:latest
+```
+
+Your Skywriter instance is now running at `http://localhost:3000`.
+
+> **Note:** You'll need a PostgreSQL database accessible from the container. You can use an external database or set up a `docker-compose.yml` to run both together.
+
 ### Create Your Account
 
 Open `http://localhost:3000/edit` in your browser. You'll be prompted to sign up and create your first admin account (when `ALLOW_SIGNUP=true`).
