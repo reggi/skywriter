@@ -18,7 +18,9 @@
 !LICENSE
 !README.md
 !RAILWAY_DEPLOYMENT.md
+!.dockerignore
 !docker-compose.yml
+!Dockerfile
 !eslint.config.js
 !nixpacks.toml
 !package.json

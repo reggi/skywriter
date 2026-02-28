@@ -39,21 +39,33 @@ import {seedIfEmpty} from '../operations/seedIfEmpty.ts'
 
 export async function createApp(pool: Pool, options?: {seed?: boolean}) {
   if (options?.seed !== false) {
-    const client = await pool.connect()
     try {
-      await seedIfEmpty(client)
-    } finally {
-      client.release()
+      const client = await pool.connect()
+      try {
+        await seedIfEmpty(client)
+      } finally {
+        client.release()
+      }
+    } catch (err) {
+      console.error('Seed check failed (non-fatal):', err)
     }
   }
 
   const uploadsRaw = process.env.UPLOADS_PATH || 'uploads'
   const uploadsPath = isAbsolute(uploadsRaw) ? uploadsRaw : resolve(process.cwd(), uploadsRaw)
-  mkdirSync(uploadsPath, {recursive: true})
+  try {
+    mkdirSync(uploadsPath, {recursive: true})
+  } catch (err) {
+    console.error(`Warning: could not create uploads directory "${uploadsPath}":`, err)
+  }
 
   const gitReposRaw = process.env.GIT_REPOS_PATH || '.git-repos'
   const gitReposPath = isAbsolute(gitReposRaw) ? gitReposRaw : resolve(process.cwd(), gitReposRaw)
-  mkdirSync(gitReposPath, {recursive: true})
+  try {
+    mkdirSync(gitReposPath, {recursive: true})
+  } catch (err) {
+    console.error(`Warning: could not create git repos directory "${gitReposPath}":`, err)
+  }
 
   const app = new Hono<AppContext>()
 
@@ -113,6 +125,7 @@ export async function createApp(pool: Pool, options?: {seed?: boolean}) {
 
   // Error handler
   app.onError((err, c) => {
+    console.error('Server error:', err)
     if ('status' in err && err.status === 404) {
       return c.text('Not Found', 404)
     }
